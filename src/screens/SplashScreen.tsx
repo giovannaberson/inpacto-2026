@@ -2,12 +2,13 @@ import { useEffect } from 'react'
 import { useAppStore } from '../store/appStore'
 
 export function SplashScreen() {
-  const { navigateTo } = useAppStore()
+  const { initAuth } = useAppStore()
 
   useEffect(() => {
-    const t = setTimeout(() => navigateTo('login'), 2400)
+    // Give splash 2.2s to show, then check auth
+    const t = setTimeout(() => initAuth(), 2200)
     return () => clearTimeout(t)
-  }, [navigateTo])
+  }, [initAuth])
 
   return (
     <div style={{
@@ -35,13 +36,13 @@ export function SplashScreen() {
       {[...Array(12)].map((_, i) => (
         <div key={i} style={{
           position: 'absolute',
-          width: Math.random() * 3 + 1,
-          height: Math.random() * 3 + 1,
+          width: (i % 3) + 1,
+          height: (i % 3) + 1,
           borderRadius: '50%',
           background: 'rgba(255,255,255,0.4)',
-          top: `${Math.random() * 90}%`,
-          left: `${Math.random() * 90}%`,
-          opacity: Math.random() * 0.6 + 0.2,
+          top: `${(i * 17 + 5) % 90}%`,
+          left: `${(i * 23 + 7) % 90}%`,
+          opacity: 0.3 + (i % 4) * 0.1,
         }} />
       ))}
 

@@ -2,7 +2,7 @@ import { useAppStore } from '../store/appStore'
 
 const ACHIEVEMENTS = [
   { id: 'a1', icon: '⚡', title: 'Primeiro acesso', desc: 'Bem-vindo!', unlocked: true },
-  { id: 'a2', icon: '📝', title: 'Anotador', desc: '5 notas salvas', unlocked: true },
+  { id: 'a2', icon: '📝', title: 'Anotador', desc: '5 notas salvas', unlocked: false },
   { id: 'a3', icon: '🔥', title: 'Engajado', desc: '10 interações no feed', unlocked: false },
   { id: 'a4', icon: '🎯', title: 'Missão cumprida', desc: 'Completou todas as missões', unlocked: false },
   { id: 'a5', icon: '🙏', title: 'Orador', desc: '5 pedidos de oração', unlocked: false },
@@ -12,8 +12,8 @@ const ACHIEVEMENTS = [
 ]
 
 export function ProfileScreen() {
-  const { user, missions, navigateTo } = useAppStore()
-  const initials = user.name.split(' ').slice(0, 2).map(w => w[0]).join('')
+  const { user, missions, navigateTo, logout } = useAppStore()
+  const initials = user.name ? user.name.split(' ').slice(0, 2).map(w => w[0]).join('') : '?'
   const completedMissions = missions.filter(m => m.completed).length
 
   return (
@@ -39,11 +39,13 @@ export function ProfileScreen() {
           </div>
 
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, color: '#fff', zIndex: 1, textAlign: 'center' }}>
-            {user.name}
+            {user.name || 'Participante'}
           </div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', fontWeight: 600, zIndex: 1 }}>
-            ⛪ {user.church}
-          </div>
+          {user.church && (
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', fontWeight: 600, zIndex: 1 }}>
+              ⛪ {user.church}
+            </div>
+          )}
           {user.bio && (
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', textAlign: 'center', maxWidth: 280, lineHeight: 1.5, zIndex: 1 }}>
               {user.bio}
@@ -83,7 +85,7 @@ export function ProfileScreen() {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>⚡ Nível atual</div>
-                <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Ainda {(2000 - user.xp)} XP para o próximo nível</div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Ainda {Math.max(0, 2000 - user.xp)} XP para o próximo nível</div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--xp)' }}>{user.xp}</div>
@@ -173,6 +175,20 @@ export function ProfileScreen() {
             </div>
             <div style={{ color: 'var(--text3)', fontSize: 18 }}>›</div>
           </div>
+
+          {/* Logout */}
+          <button
+            onClick={logout}
+            style={{
+              width: '100%', padding: 14,
+              background: 'transparent', border: '1.5px solid rgba(250,20,98,0.25)',
+              borderRadius: 14, color: 'var(--pink)', fontSize: 14, fontWeight: 600,
+              cursor: 'pointer', marginBottom: 24,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}
+          >
+            <span>🚪</span> Sair da conta
+          </button>
         </div>
       </div>
     </div>

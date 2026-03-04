@@ -2,12 +2,26 @@ import { useState } from 'react'
 import { useAppStore } from '../store/appStore'
 
 export function LoginScreen() {
-  const { navigateTo } = useAppStore()
+  const { navigateTo, login, loading } = useAppStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
 
-  const handleLogin = () => {
-    if (email && password) navigateTo('home')
+  const handleLogin = async () => {
+    if (!email || !password) return
+    setError('')
+    try {
+      await login(email, password)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao entrar'
+      if (msg.includes('Invalid login') || msg.includes('invalid_credentials')) {
+        setError('E-mail ou senha incorretos')
+      } else if (msg.includes('Email not confirmed')) {
+        setError('Confirme seu e-mail antes de entrar')
+      } else {
+        setError(msg)
+      }
+    }
   }
 
   return (
@@ -23,7 +37,6 @@ export function LoginScreen() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         minHeight: 240,
       }}>
-        {/* Gradient orbs */}
         <div style={{
           position: 'absolute', top: -60, left: -60, width: 280, height: 280,
           background: 'radial-gradient(circle, rgba(255,143,68,0.35) 0%, transparent 65%)',
@@ -75,6 +88,16 @@ export function LoginScreen() {
           Entre para viver a conferência
         </div>
 
+        {error && (
+          <div style={{
+            background: 'rgba(250,20,98,0.08)', border: '1px solid rgba(250,20,98,0.25)',
+            borderRadius: 10, padding: '10px 14px', marginBottom: 16,
+            fontSize: 13, color: 'var(--pink)', fontWeight: 500,
+          }}>
+            {error}
+          </div>
+        )}
+
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 6, display: 'block', letterSpacing: '0.2px' }}>
             E-mail
@@ -118,21 +141,24 @@ export function LoginScreen() {
 
         <button
           onClick={handleLogin}
+          disabled={loading || !email || !password}
           style={{
-            width: '100%', padding: 15, background: 'var(--grad-warm)',
+            width: '100%', padding: 15, background: loading ? 'var(--text3)' : 'var(--grad-warm)',
             border: 'none', borderRadius: 'var(--radius-sm)',
             color: 'white', fontSize: 14, fontWeight: 700,
-            cursor: 'pointer', marginBottom: 12, letterSpacing: '0.3px',
+            cursor: loading ? 'not-allowed' : 'pointer', marginBottom: 12, letterSpacing: '0.3px',
             transition: 'opacity 0.2s, transform 0.12s',
+            opacity: (!email || !password) ? 0.6 : 1,
           }}
-          onMouseDown={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'scale(0.98)' }}
+          onMouseDown={e => { if (!loading) { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'scale(0.98)' } }}
           onMouseUp={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1)' }}
         >
-          Entrar
+          {loading ? 'Entrando...' : 'Entrar'}
         </button>
 
         <button
           onClick={() => navigateTo('signup')}
+          disabled={loading}
           style={{
             width: '100%', padding: 13, background: 'transparent',
             border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',

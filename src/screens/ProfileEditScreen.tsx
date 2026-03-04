@@ -8,9 +8,12 @@ export function ProfileEditScreen() {
   const [city, setCity] = useState(user.city)
   const [bio, setBio] = useState(user.bio)
   const [age, setAge] = useState(String(user.age || ''))
+  const [saving, setSaving] = useState(false)
 
-  const handleSave = () => {
-    updateProfile({ name, church, city, bio, age: parseInt(age) || user.age })
+  const handleSave = async () => {
+    setSaving(true)
+    await updateProfile({ name, church, city, bio, age: parseInt(age) || user.age })
+    setSaving(false)
     goBack()
   }
 
@@ -32,12 +35,13 @@ export function ProfileEditScreen() {
           </button>
           <button
             onClick={handleSave}
+            disabled={saving}
             style={{
               background: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.4)',
-              borderRadius: 12, padding: '7px 16px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              borderRadius: 12, padding: '7px 16px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer',
             }}
           >
-            Salvar
+            {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#fff', marginTop: 12 }}>

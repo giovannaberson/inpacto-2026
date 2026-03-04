@@ -2,17 +2,26 @@ import { useState } from 'react'
 import { useAppStore } from '../store/appStore'
 
 export function ProfileSetupScreen() {
-  const { navigateTo, updateProfile } = useAppStore()
+  const { navigateTo, updateProfile, loadInitialData, authUserId } = useAppStore()
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
   const [city, setCity] = useState('')
   const [church, setChurch] = useState('')
   const [bio, setBio] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  const handleSave = () => {
-    if (name) {
-      updateProfile({ name, age: parseInt(age) || 17, city, church, bio })
+  const handleSave = async () => {
+    if (!name.trim()) return
+    setSaving(true)
+    try {
+      await updateProfile({ name: name.trim(), age: parseInt(age) || 17, city, church, bio })
+      if (authUserId) await loadInitialData(authUserId)
       navigateTo('home')
+    } catch {
+      // ignore errors here - profile update is best-effort
+      navigateTo('home')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -26,7 +35,7 @@ export function ProfileSetupScreen() {
       }}>
         <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, background: 'rgba(255,255,255,0.06)', borderRadius: '50%' }} />
 
-        {/* Avatar upload */}
+        {/* Avatar placeholder */}
         <div style={{
           width: 82, height: 82, borderRadius: '50%',
           background: 'rgba(255,255,255,0.18)', border: '2px dashed rgba(255,255,255,0.5)',
@@ -94,14 +103,16 @@ export function ProfileSetupScreen() {
 
         <button
           onClick={handleSave}
+          disabled={saving || !name.trim()}
           style={{
-            width: '100%', padding: 15, background: 'var(--grad-warm)',
+            width: '100%', padding: 15,
+            background: saving || !name.trim() ? 'var(--text3)' : 'var(--grad-warm)',
             border: 'none', borderRadius: 'var(--radius-sm)',
             color: 'white', fontSize: 14, fontWeight: 700,
-            cursor: 'pointer', marginBottom: 24,
+            cursor: saving || !name.trim() ? 'not-allowed' : 'pointer', marginBottom: 24,
           }}
         >
-          Entrar na conferência 🎉
+          {saving ? 'Salvando...' : 'Entrar na conferência 🎉'}
         </button>
       </div>
     </div>
