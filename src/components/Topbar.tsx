@@ -16,8 +16,7 @@ export function Topbar() {
         <img
           src="/logo-inpacto.svg"
           alt="InPacto"
-          height={28}
-          style={{ display: 'block' }}
+          style={{ display: 'block', height: 22, width: 'auto' }}
         />
       </div>
 
