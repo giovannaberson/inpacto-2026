@@ -12,21 +12,13 @@ export function Topbar() {
       flexShrink: 0, position: 'relative', zIndex: 10,
     }}>
       {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 32 }}>
-        <span style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px',
-          background: 'var(--grad-warm)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-        }}>
-          InPacto
-        </span>
-        <span style={{
-          fontSize: 10, fontWeight: 700, letterSpacing: '2px',
-          color: 'var(--text3)', textTransform: 'uppercase', marginTop: 2,
-        }}>
-          2026
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', height: 32 }}>
+        <img
+          src="/logo-inpacto.svg"
+          alt="InPacto"
+          height={28}
+          style={{ display: 'block' }}
+        />
       </div>
 
       {/* Right side */}
