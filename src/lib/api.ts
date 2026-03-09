@@ -34,6 +34,16 @@ export async function resendVerification(email: string) {
   if (error) throw error
 }
 
+export async function verifyOtp(email: string, token: string) {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'signup',
+  })
+  if (error) throw error
+  return data
+}
+
 // ─── PROFILES ────────────────────────────────────────────────────────────────
 
 export async function getProfile(userId: string): Promise<User | null> {
@@ -77,7 +87,6 @@ export async function upsertProfile(userId: string, updates: Partial<User>) {
 export async function addXp(userId: string, amount: number) {
   const { error } = await supabase.rpc('increment_xp', { user_id: userId, amount })
   if (error) {
-    // Fallback: fetch + update
     const { data } = await supabase.from('profiles').select('xp').eq('id', userId).single()
     const newXp = (data?.xp ?? 0) + amount
     await supabase.from('profiles').update({ xp: newXp }).eq('id', userId)
@@ -130,14 +139,10 @@ export async function getMissionsWithStatus(userId: string): Promise<Mission[]> 
 }
 
 export async function completeMission(userId: string, missionId: string, xpReward: number) {
-  // Mark mission completed
   const { error } = await supabase
     .from('user_missions')
     .insert({ user_id: userId, mission_id: missionId })
-
   if (error) throw error
-
-  // Add XP to profile
   await addXp(userId, xpReward)
 }
 
