@@ -93,15 +93,10 @@ const EMPTY_USER: User = {
 }
 
 interface AppState {
-  // Navigation
   currentScreen: Screen
   previousScreen: Screen | null
-
-  // Auth
   authUserId: string | null
-  pendingEmail: string | null  // email waiting for verification
-
-  // Data
+  pendingEmail: string | null
   user: User
   missions: Mission[]
   feed: FeedPost[]
@@ -112,29 +107,20 @@ interface AppState {
   liveOnlineCount: number
   activeNoteSessionId: string | null
   xpAnimation: boolean
-
-  // Loading states
   loading: boolean
   feedLoading: boolean
   rankingLoading: boolean
-
-  // Navigation
   navigateTo: (screen: Screen) => void
   goBack: () => void
-
-  // Auth actions
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string) => Promise<void>
+  verifyEmail: (code: string) => Promise<void>
   logout: () => Promise<void>
   setPendingEmail: (email: string) => void
   initAuth: () => Promise<void>
-
-  // Data loading
   loadInitialData: (userId: string) => Promise<void>
   loadFeed: () => Promise<void>
   loadRanking: () => Promise<void>
-
-  // Actions
   completeMission: (id: string) => Promise<void>
   toggleLike: (postId: string) => void
   addReaction: (postId: string, emoji: string) => void
@@ -170,8 +156,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setPendingEmail: (email) => set({ pendingEmail: email }),
 
-  // ─── Auth ─────────────────────────────────────────────────────────────────
-
   initAuth: async () => {
     const session = await api.getSession()
     if (session?.user) {
@@ -183,7 +167,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         await get().loadInitialData(userId)
         set({ currentScreen: 'home' })
       } else {
-        // Has auth but no profile yet
         set({ currentScreen: 'profile-setup' })
       }
     } else {
@@ -197,10 +180,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       const data = await api.signIn(email, password)
       const userId = data.user?.id
       if (!userId) throw new Error('Login falhou')
-
       set({ authUserId: userId })
       const profile = await api.getProfile(userId)
-
       if (profile && profile.name) {
         set({ user: profile })
         await get().loadInitialData(userId)
@@ -225,6 +206,32 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  verifyEmail: async (code) => {
+    const { pendingEmail } = get()
+    if (!pendingEmail) throw new Error('E-mail não encontrado. Tente fazer o cadastro novamente.')
+    set({ loading: true })
+    try {
+      const data = await api.verifyOtp(pendingEmail, code)
+      const userId = data.user?.id
+      if (!userId) throw new Error('Verificação falhou. Tente novamente.')
+      set({ authUserId: userId, loading: false })
+      const profile = await api.getProfile(userId)
+      if (profile && profile.name) {
+        set({ user: profile })
+        await get().loadInitialData(userId)
+        set({ currentScreen: 'home' })
+      } else {
+        set({
+          user: { ...EMPTY_USER, id: userId, email: pendingEmail },
+          currentScreen: 'profile-setup',
+        })
+      }
+    } catch (err) {
+      set({ loading: false })
+      throw err
+    }
+  },
+
   logout: async () => {
     await api.signOut()
     set({
@@ -240,8 +247,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
   },
 
-  // ─── Data Loading ──────────────────────────────────────────────────────────
-
   loadInitialData: async (userId) => {
     const [sessions, missions, feed, ranking, products] = await Promise.all([
       api.getSessions(),
@@ -250,18 +255,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       api.getRanking(),
       api.getProducts(userId),
     ])
-
     const notes = await api.getNotes(userId, sessions)
-
-    set({
-      sessions,
-      missions,
-      feed,
-      ranking,
-      products,
-      notes,
-      liveOnlineCount: Math.floor(Math.random() * 200) + 250, // simulated
-    })
+    set({ sessions, missions, feed, ranking, products, notes, liveOnlineCount: Math.floor(Math.random() * 200) + 250 })
   },
 
   loadFeed: async () => {
@@ -278,24 +273,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ ranking, rankingLoading: false })
   },
 
-  // ─── Actions ───────────────────────────────────────────────────────────────
-
   completeMission: async (id) => {
     const { authUserId, missions } = get()
     const mission = missions.find(m => m.id === id)
     if (!mission || mission.completed || !authUserId) return
-
-    // Optimistic update
     set((s) => ({
       missions: s.missions.map(m => m.id === id ? { ...m, completed: true } : m),
       user: { ...s.user, xp: s.user.xp + mission.xpReward },
       xpAnimation: true,
     }))
-
     try {
       await api.completeMission(authUserId, id, mission.xpReward)
     } catch {
-      // Rollback on error
       set((s) => ({
         missions: s.missions.map(m => m.id === id ? { ...m, completed: false } : m),
         user: { ...s.user, xp: s.user.xp - mission.xpReward },
@@ -310,17 +299,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!authUserId) return
     const post = feed.find(p => p.id === postId)
     if (!post) return
-
-    // Optimistic update
     set((s) => ({
       feed: s.feed.map(p => p.id === postId
         ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
         : p
       )
     }))
-    // Sync to server (fire and forget)
     api.toggleLike(authUserId, postId, post.liked).catch(() => {
-      // Rollback
       set((s) => ({
         feed: s.feed.map(p => p.id === postId
           ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
@@ -337,8 +322,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!post) return
     const existingReaction = post.reactions.find(r => r.emoji === emoji)
     const currentlyReacted = existingReaction?.reacted ?? false
-
-    // Optimistic update
     set((s) => ({
       feed: s.feed.map(p => {
         if (p.id !== postId) return p
@@ -356,40 +339,24 @@ export const useAppStore = create<AppState>((set, get) => ({
         return { ...p, reactions: [...p.reactions, { emoji, count: 1, reacted: true }] }
       })
     }))
-    // Sync to server
     api.toggleReaction(authUserId, postId, emoji, currentlyReacted).catch(() => {})
   },
 
   addPost: async (type, content) => {
     const { authUserId, user } = get()
     if (!authUserId) return
-
     const tempId = `temp-${Date.now()}`
-    const tempPost: FeedPost = {
-      id: tempId,
-      userId: authUserId,
-      userName: user.name,
+    const tempPost = {
+      id: tempId, userId: authUserId, userName: user.name,
       userInitials: user.name.split(' ').slice(0, 2).map(w => w[0]).join(''),
-      church: user.church,
-      type,
-      content,
-      createdAt: 'agora',
-      reactions: [],
-      likes: 0,
-      liked: false,
+      church: user.church, type, content, createdAt: 'agora',
+      reactions: [], likes: 0, liked: false,
     }
-
-    // Optimistic add
     set((s) => ({ feed: [tempPost, ...s.feed] }))
-
     try {
       const real = await api.addPost(authUserId, type, content)
-      // Replace temp with real
-      set((s) => ({
-        feed: s.feed.map(p => p.id === tempId ? { ...tempPost, id: real.id } : p)
-      }))
+      set((s) => ({ feed: s.feed.map(p => p.id === tempId ? { ...tempPost, id: real.id } : p) }))
     } catch {
-      // Remove temp on error
       set((s) => ({ feed: s.feed.filter(p => p.id !== tempId) }))
     }
   },
@@ -399,12 +366,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!authUserId) return
     const product = products.find(p => p.id === productId)
     if (!product) return
-
-    // Optimistic update
     set((s) => ({
       products: s.products.map(p => p.id === productId ? { ...p, inWishlist: !p.inWishlist } : p)
     }))
-    // Sync
     api.toggleWishlist(authUserId, productId, product.inWishlist).catch(() => {
       set((s) => ({
         products: s.products.map(p => p.id === productId ? { ...p, inWishlist: !p.inWishlist } : p)
@@ -415,26 +379,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   saveNote: async (sessionId, content) => {
     const { authUserId, sessions } = get()
     if (!authUserId) return
-
     const session = sessions.find(s => s.id === sessionId)
     const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-
-    // Optimistic update
     set((s) => {
       const existing = s.notes.find(n => n.sessionId === sessionId)
       if (existing) {
         return { notes: s.notes.map(n => n.sessionId === sessionId ? { ...n, content, updatedAt: now } : n) }
       }
-      return {
-        notes: [...s.notes, {
-          sessionId,
-          sessionTitle: session?.title ?? 'Sessão',
-          content,
-          updatedAt: now,
-        }]
-      }
+      return { notes: [...s.notes, { sessionId, sessionTitle: session?.title ?? 'Sessão', content, updatedAt: now }] }
     })
-
     await api.saveNote(authUserId, sessionId, content)
   },
 
@@ -443,10 +396,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateProfile: async (data) => {
     const { authUserId } = get()
     if (!authUserId) return
-
-    // Optimistic update
     set((s) => ({ user: { ...s.user, ...data } }))
-
     try {
       await api.upsertProfile(authUserId, { ...get().user, ...data })
     } catch (err) {
