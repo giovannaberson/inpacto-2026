@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useAppStore } from '../store/appStore'
-import { Topbar } from '../components/Topbar'
 
 type FeedTab = 'comments' | 'prayer' | 'announcements'
 type SheetType = 'none' | 'comment' | 'live-question' | 'prayer'
@@ -34,7 +33,6 @@ export function HomeScreen() {
 
   return (
     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-      <Topbar />
 
       <div className="scroll-area">
         <div style={{ padding: '16px 16px 0' }}>
