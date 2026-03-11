@@ -12,7 +12,7 @@ export function LoginScreen() {
     setError('')
     try {
       await login(email, password)
-    } catch (err: unknown) {
+    } catch (err: unknown) 
       const msg = err instanceof Error ? err.message : 'Erro ao entrar'
       if (msg.includes('Invalid login') || msg.includes('invalid_credentials')) {
         setError('E-mail ou senha incorretos')
@@ -32,7 +32,7 @@ export function LoginScreen() {
     }}>
       {/* Full-screen background image */}
       <img
-        src="/saturados-login.jpg"
+        src="/saturados-splash.jpg"
         alt=""
         style={{
           position: 'absolute', inset: 0,
