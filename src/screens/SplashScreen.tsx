@@ -18,7 +18,7 @@ export function SplashScreen() {
     }}>
       {/* Full-screen background image */}
       <img
-        src="/saturados-splash.jpg
+        src="/saturados-splash.jpg"
         alt=""
         style={{
           position: 'absolute', inset: 0,
