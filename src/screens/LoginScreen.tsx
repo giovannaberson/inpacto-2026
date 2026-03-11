@@ -32,7 +32,7 @@ export function LoginScreen() {
     }}>
       {/* Full-screen background image */}
       <img
-        src="/saturados-login.jpg"
+                src="/saturados-splash.jpg"
         alt=""
         style={{
           position: 'absolute', inset: 0,
