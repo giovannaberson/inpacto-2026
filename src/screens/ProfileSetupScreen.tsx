@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useAppStore } from '../store/appStore'
+import { checkAchievement } from '../lib/api'
 
 export function ProfileSetupScreen() {
-  const { navigateTo, updateProfile, loadInitialData, authUserId } = useAppStore()
+  const { navigateTo, updateProfile, loadInitialData, loadAchievements, authUserId } = useAppStore()
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
   const [city, setCity] = useState('')
@@ -16,6 +17,8 @@ export function ProfileSetupScreen() {
     try {
       await updateProfile({ name: name.trim(), age: parseInt(age) || 17, city, church, bio })
       if (authUserId) await loadInitialData(authUserId)
+      // First-time profile setup: fire boas_vindas achievement in background
+      checkAchievement('boas_vindas').then(() => loadAchievements()).catch(() => {})
       navigateTo('home')
     } catch {
       // ignore errors here - profile update is best-effort
@@ -42,7 +45,7 @@ export function ProfileSetupScreen() {
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', margin: '0 auto 16px', gap: 4,
         }}>
-          <span style={{ fontSize: 24 }}>📷</span>
+          <span style={{ fontSize: 24 }}>ð·</span>
           <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>Foto</span>
         </div>
 
@@ -50,14 +53,14 @@ export function ProfileSetupScreen() {
           Configure seu perfil
         </div>
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: 500, marginTop: 4, textAlign: 'center' }}>
-          Como os outros participantes vão te ver
+          Como os outros participantes vÃ£o te ver
         </div>
       </div>
 
       {/* Form */}
       <div className="scroll-area" style={{ padding: '24px 24px 0' }}>
         {[
-          { label: 'Nome *', placeholder: 'Como você quer ser chamado(a)?', value: name, onChange: setName, type: 'text' },
+          { label: 'Nome *', placeholder: 'Como vocÃª quer ser chamado(a)?', value: name, onChange: setName, type: 'text' },
           { label: 'Idade', placeholder: 'Sua idade', value: age, onChange: setAge, type: 'number' },
           { label: 'Cidade', placeholder: 'Cidade, Estado', value: city, onChange: setCity, type: 'text' },
           { label: 'Igreja', placeholder: 'Nome da sua igreja', value: church, onChange: setChurch, type: 'text' },
@@ -87,7 +90,7 @@ export function ProfileSetupScreen() {
             Bio <span style={{ color: 'var(--text3)', fontWeight: 500 }}>(opcional)</span>
           </label>
           <textarea
-            placeholder="Conte um pouco sobre você..."
+            placeholder="Conte um pouco sobre vocÃª..."
             value={bio}
             onChange={e => setBio(e.target.value)}
             rows={3}
@@ -112,7 +115,7 @@ export function ProfileSetupScreen() {
             cursor: saving || !name.trim() ? 'not-allowed' : 'pointer', marginBottom: 24,
           }}
         >
-          {saving ? 'Salvando...' : 'Entrar na conferência 🎉'}
+          {saving ? 'Salvando...' : 'Entrar na conferÃªncia ð'}
         </button>
       </div>
     </div>
