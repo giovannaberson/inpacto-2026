@@ -17,22 +17,32 @@ export function StoreScreen() {
       <div style={{
         padding: '52px 20px 16px',
         background: 'var(--grad-hero)',
-        flexShrink: 0, position: 'relative', overflow: 'hidden',
+        flexShrink: 0,
+        position: 'relative',
+        overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', top: -60, right: -60, width: 180, height: 180, background: 'rgba(255,255,255,0.06)', borderRadius: '50%', pointerEvents: 'none' }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, color: '#fff' }}>Loja & Cantina 🛍️</div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4, fontWeight: 500 }}>
-              Produtos e alimentação
+              Produtos e restaurantes
             </div>
           </div>
           <button
             onClick={() => navigateTo('wishlist')}
             style={{
-              background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)',
-              borderRadius: 12, padding: '8px 14px', color: '#fff', fontSize: 12, fontWeight: 700,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              background: 'rgba(255,255,255,0.2)',
+              border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: 12,
+              padding: '8px 14px',
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
             }}
           >
             💛 Wishlist ({products.filter(p => p.inWishlist).length})
@@ -42,22 +52,31 @@ export function StoreScreen() {
 
       {/* Tabs */}
       <div style={{
-        display: 'flex', background: 'var(--surface)', padding: '10px 16px',
-        gap: 8, borderBottom: '1px solid var(--border)', flexShrink: 0,
+        display: 'flex',
+        background: 'var(--surface)',
+        padding: '10px 16px',
+        gap: 8,
+        borderBottom: '1px solid var(--border)',
+        flexShrink: 0,
       }}>
         {([
-          { key: 'shop', label: '🛍️ Mocidade', icon: '👕' },
-          { key: 'food', label: '🍔 Alimentação', icon: '☕' },
-        ] as { key: StoreTab; label: string; icon: string }[]).map(t => (
+          { key: 'shop', label: '👕 Mocidade' },
+          { key: 'food', label: '🍽️ Restaurantes' },
+        ] as { key: StoreTab; label: string }[]).map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             style={{
-              flex: 1, padding: '10px 12px', border: 'none',
+              flex: 1,
+              padding: '10px 12px',
+              border: 'none',
               background: tab === t.key ? 'var(--grad-warm)' : 'var(--bg2)',
-              borderRadius: 12, fontSize: 13, fontWeight: 700,
+              borderRadius: 12,
+              fontSize: 13,
+              fontWeight: 700,
               color: tab === t.key ? '#fff' : 'var(--text2)',
-              cursor: 'pointer', transition: 'all 0.18s',
+              cursor: 'pointer',
+              transition: 'all 0.18s',
             }}
           >
             {t.label}
@@ -73,30 +92,39 @@ export function StoreScreen() {
               key={product.id}
               onClick={() => setSelected(product)}
               style={{
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)', overflow: 'hidden', cursor: 'pointer',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius)',
+                overflow: 'hidden',
+                cursor: 'pointer',
                 transition: 'transform 0.15s, box-shadow 0.15s',
                 boxShadow: 'var(--shadow-sm)',
               }}
-              onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
-              onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-              onTouchStart={e => e.currentTarget.style.transform = 'scale(0.97)'}
-              onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+              onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
+              onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+              onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.97)')}
+              onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
             >
               {/* Product image area */}
               <div style={{
-                width: '100%', height: 110,
+                width: '100%',
+                height: 110,
                 background: 'linear-gradient(135deg, rgba(255,143,68,.1), rgba(250,20,98,.06))',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 44, borderBottom: '1px solid var(--border)',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderBottom: '1px solid var(--border)',
                 position: 'relative',
               }}>
-                {product.emoji}
+                {product.image
+                  ? <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span style={{ fontSize: 44 }}>{product.emoji}</span>
+                }
                 {product.inWishlist && (
                   <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 14 }}>💛</div>
                 )}
               </div>
-
               <div style={{ padding: '10px 12px 12px' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginBottom: 2, lineHeight: 1.3 }}>
                   {product.name}
@@ -112,9 +140,13 @@ export function StoreScreen() {
                     onClick={e => { e.stopPropagation(); toggleWishlist(product.id) }}
                     style={{
                       background: product.inWishlist ? 'rgba(250,20,98,0.1)' : 'var(--bg2)',
-                      border: `1px solid ${product.inWishlist ? 'var(--pink)' : 'var(--border)'}`,
-                      borderRadius: 8, padding: '4px 8px', fontSize: 11, fontWeight: 700,
-                      cursor: 'pointer', color: product.inWishlist ? 'var(--pink)' : 'var(--text3)',
+                      border: product.inWishlist ? '1px solid var(--pink)' : '1px solid var(--border)',
+                      borderRadius: 8,
+                      padding: '4px 8px',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      color: product.inWishlist ? 'var(--pink)' : 'var(--text3)',
                       transition: 'all 0.15s',
                     }}
                   >
@@ -139,8 +171,10 @@ export function StoreScreen() {
             className="sheet-up"
             style={{
               position: 'absolute', bottom: 0, left: 0, right: 0,
-              background: 'var(--surface)', borderRadius: '24px 24px 0 0',
-              padding: '12px 20px 40px', zIndex: 91,
+              background: 'var(--surface)',
+              borderRadius: '24px 24px 0 0',
+              padding: '12px 20px 40px',
+              zIndex: 91,
               boxShadow: '0 -4px 30px rgba(0,0,0,0.12)',
             }}
             onClick={e => e.stopPropagation()}
@@ -148,15 +182,19 @@ export function StoreScreen() {
             <div style={{ width: 36, height: 4, background: 'var(--bg3)', borderRadius: 2, margin: '0 auto 18px' }} />
 
             {/* Product header */}
-            <div style={{
-              width: '100%', height: 160,
-              background: 'linear-gradient(135deg, rgba(255,143,68,.12), rgba(250,20,98,.08))',
-              borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 64, marginBottom: 18,
-              border: '1px solid var(--border)',
-            }}>
-              {selected.emoji}
-            </div>
+            {selected.image
+              ? (
+                <img
+                  src={selected.image}
+                  alt={selected.name}
+                  style={{ width: '100%', height: 160, borderRadius: 16, objectFit: 'cover', marginBottom: 18, border: '1px solid var(--border)', display: 'block' }}
+                />
+              ) : (
+                <div style={{ width: '100%', height: 160, background: 'linear-gradient(135deg, rgba(255,143,68,.12), rgba(250,20,98,.08))', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 64, marginBottom: 18, border: '1px solid var(--border)' }}>
+                  {selected.emoji}
+                </div>
+              )
+            }
 
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--dark)', marginBottom: 4 }}>
               {selected.name}
@@ -164,22 +202,22 @@ export function StoreScreen() {
             {selected.venue && (
               <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 8 }}>📍 {selected.venue}</div>
             )}
-
             <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--pink)', marginBottom: 12 }}>
               R$ {selected.price.toFixed(2).replace('.', ',')}
             </div>
-
             <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 20 }}>
               {selected.description}
             </p>
-
             <button
               onClick={() => { toggleWishlist(selected.id); setSelected(null) }}
               style={{
-                width: '100%', padding: 14,
+                width: '100%',
+                padding: 14,
                 background: selected.inWishlist ? 'rgba(250,20,98,0.08)' : 'var(--grad-warm)',
                 border: selected.inWishlist ? '1.5px solid var(--pink)' : 'none',
-                borderRadius: 14, fontSize: 14, fontWeight: 700,
+                borderRadius: 14,
+                fontSize: 14,
+                fontWeight: 700,
                 cursor: 'pointer',
                 color: selected.inWishlist ? 'var(--pink)' : '#fff',
               }}
