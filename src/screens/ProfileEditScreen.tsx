@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAppStore } from '../store/appStore'
 
 export function ProfileEditScreen() {
-  const { user, updateProfile, goBack } = useAppStore()
+  const { user, updateProfile, goBack, completeMissionByKey } = useAppStore()
   const [name, setName] = useState(user.name)
   const [church, setChurch] = useState(user.church)
   const [city, setCity] = useState(user.city)
@@ -13,6 +13,10 @@ export function ProfileEditScreen() {
   const handleSave = async () => {
     setSaving(true)
     await updateProfile({ name, church, city, bio, age: parseInt(age) || user.age })
+    // Trigger complete_profile mission if all 5 fields are filled
+    if (name.trim() && age.trim() && city.trim() && church.trim() && bio.trim()) {
+      await completeMissionByKey('complete_profile')
+    }
     setSaving(false)
     goBack()
   }
@@ -23,24 +27,16 @@ export function ProfileEditScreen() {
       <div style={{
         padding: '52px 20px 20px',
         background: 'var(--grad-hero)',
-        flexShrink: 0, position: 'relative', overflow: 'hidden',
+        flexShrink: 0,
+        position: 'relative',
+        overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, background: 'rgba(255,255,255,0.06)', borderRadius: '50%' }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button
-            onClick={goBack}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, padding: 0 }}
-          >
+          <button onClick={goBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, padding: 0 }}>
             ← Cancelar
           </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              background: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.4)',
-              borderRadius: 12, padding: '7px 16px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer',
-            }}
-          >
+          <button onClick={handleSave} disabled={saving} style={{ background: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 12, padding: '7px 16px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}>
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
@@ -54,7 +50,8 @@ export function ProfileEditScreen() {
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
           <div style={{
             width: 82, height: 82, borderRadius: '50%',
-            background: 'var(--grad-warm)', border: '3px solid white',
+            background: 'var(--grad-warm)',
+            border: '3px solid white',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 28, fontWeight: 700, color: '#fff',
             boxShadow: 'var(--shadow)',
@@ -78,11 +75,7 @@ export function ProfileEditScreen() {
               placeholder={field.placeholder}
               value={field.value}
               onChange={e => field.onChange(e.target.value)}
-              style={{
-                width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)',
-                borderRadius: 'var(--radius-sm)', padding: '13px 15px',
-                color: 'var(--text)', fontSize: 14, outline: 'none',
-              }}
+              style={{ width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '13px 15px', color: 'var(--text)', fontSize: 14, outline: 'none' }}
               onFocus={e => e.target.style.borderColor = 'var(--pink)'}
               onBlur={e => e.target.style.borderColor = 'var(--border)'}
             />
@@ -98,11 +91,7 @@ export function ProfileEditScreen() {
             value={bio}
             onChange={e => setBio(e.target.value)}
             rows={3}
-            style={{
-              width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)',
-              borderRadius: 'var(--radius-sm)', padding: '13px 15px',
-              color: 'var(--text)', fontSize: 14, outline: 'none', resize: 'none',
-            }}
+            style={{ width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '13px 15px', color: 'var(--text)', fontSize: 14, outline: 'none', resize: 'none' }}
             onFocus={e => e.target.style.borderColor = 'var(--pink)'}
             onBlur={e => e.target.style.borderColor = 'var(--border)'}
           />
@@ -110,12 +99,7 @@ export function ProfileEditScreen() {
 
         <button
           onClick={handleSave}
-          style={{
-            width: '100%', padding: 15, background: 'var(--grad-warm)',
-            border: 'none', borderRadius: 'var(--radius-sm)',
-            color: 'white', fontSize: 14, fontWeight: 700,
-            cursor: 'pointer', marginBottom: 8,
-          }}
+          style={{ width: '100%', padding: 15, background: 'var(--grad-warm)', border: 'none', borderRadius: 'var(--radius-sm)', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}
         >
           Salvar alterações
         </button>
