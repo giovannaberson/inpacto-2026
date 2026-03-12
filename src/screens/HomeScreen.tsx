@@ -1,23 +1,21 @@
 import { useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
-import { Topbar } from '../components/Topbar'
-
 type FeedTab = 'comments' | 'prayer' | 'announcements'
 type SheetType = 'none' | 'pick' | 'comment' | 'live-question' | 'prayer'
 
 // Reactions defined in the mock
 const LIVE_REACTIONS = [
-  { emoji: 'â¤ï¸', label: 'Amei' },
-  { emoji: 'ð', label: 'AmÃ©m' },
-  { emoji: 'â¨', label: 'AbenÃ§oado' },
-  { emoji: 'ð¡', label: 'Inspirado' },
-  { emoji: 'ð', label: 'Louvor' },
+  { emoji: '❤️', label: 'Amei' },
+  { emoji: '🙏', label: 'Amém' },
+  { emoji: '✨', label: 'Abençoado' },
+  { emoji: '💡', label: 'Inspirado' },
+  { emoji: '🙌', label: 'Louvor' },
 ]
 
 export function HomeScreen() {
   const {
     missions, feed, eventConfig, liveSession,
-    completeMission, toggleLike, addReaction, addPost, submitLiveQuestion,
+    toggleLike, addReaction, addPost, submitLiveQuestion,
     addSheetOpen, setAddSheetOpen,
   } = useAppStore()
 
@@ -28,7 +26,7 @@ export function HomeScreen() {
   const [questionSent, setQuestionSent] = useState(false)
   const [activeReactions, setActiveReactions] = useState<Record<string, boolean>>({})
 
-  // Sync addSheetOpen store flag â local sheet state
+  // Sync addSheetOpen store flag → local sheet state
   useMemo(() => {
     if (addSheetOpen) {
       setSheet('pick')
@@ -87,16 +85,15 @@ export function HomeScreen() {
   // Short label for mission node (first word of title, 6 chars max)
   const shortLabel = (title: string) => {
     const word = title.split(' ')[0]
-    return word.length > 6 ? word.slice(0, 5) + 'â¦' : word
+    return word.length > 6 ? word.slice(0, 5) + '…' : word
   }
 
   return (
     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-      <Topbar />
 
       <div className="scroll-area" style={{ padding: '14px 14px 0' }}>
 
-        {/* âââ MISSIONS CARD âââââââââââââââââââââââââââââââââââââââââââââââ */}
+        {/* ─── MISSIONS CARD ─────────────────────────────────────────────── */}
         <div style={{
           background: 'var(--surface)', border: '1px solid var(--border)',
           borderRadius: 18, overflow: 'hidden', marginBottom: 14,
@@ -106,7 +103,7 @@ export function HomeScreen() {
           <div style={{ padding: '16px 16px 0' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.2px' }}>
-                MissÃµes do dia
+                Missões do dia
               </div>
               {totalXp > 0 && (
                 <div style={{
@@ -141,10 +138,9 @@ export function HomeScreen() {
                     return (
                       <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                         <button
-                          onClick={() => !isDone && completeMission(m.id)}
                           style={{
                             width: 34, height: 34, borderRadius: '50%',
-                            cursor: isDone ? 'default' : 'pointer',
+                            cursor: 'default',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             background: isDone
                               ? 'linear-gradient(135deg, #FF8F44, #FA1462)'
@@ -190,11 +186,10 @@ export function HomeScreen() {
               {todayMissions.map((m, i) => (
                 <div key={m.id}>
                   <div
-                    onClick={() => !m.completed && completeMission(m.id)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '11px 14px', background: 'var(--surface)',
-                      cursor: m.completed ? 'default' : 'pointer',
+                      cursor: 'default',
                     }}
                   >
                     {/* Icon circle */}
@@ -227,7 +222,7 @@ export function HomeScreen() {
                         fontSize: 11, fontWeight: 600, marginTop: 1,
                         color: m.completed ? 'var(--green)' : 'var(--text3)',
                       }}>
-                        {m.completed ? 'ConcluÃ­da â' : 'NÃ£o iniciada'}
+                        {m.completed ? 'Concluída ✓' : 'Não iniciada'}
                       </div>
                     </div>
 
@@ -270,7 +265,7 @@ export function HomeScreen() {
           </button>
         </div>
 
-        {/* âââ LIVE CARD âââââââââââââââââââââââââââââââââââââââââââââââââââ */}
+        {/* ─── LIVE CARD ─────────────────────────────────────────────────── */}
         {liveSession ? (
           <div style={{
             background: '#1A0D2E',
@@ -375,7 +370,7 @@ export function HomeScreen() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                â
+                ↑
               </button>
             </div>
           </div>
@@ -386,20 +381,20 @@ export function HomeScreen() {
             borderRadius: 16, padding: '14px 18px',
             marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12,
           }}>
-            <div style={{ fontSize: 28 }}>ð¡</div>
+            <div style={{ fontSize: 28 }}>📡</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Nenhuma sessÃ£o ao vivo</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Nenhuma sessão ao vivo</div>
               <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
-                {eventConfig?.tagline ?? 'Confira a agenda para os prÃ³ximos horÃ¡rios'}
+                {eventConfig?.tagline ?? 'Confira a agenda para os próximos horários'}
               </div>
             </div>
           </div>
         )}
 
-        {/* âââ FEED âââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
+        {/* ─── FEED ─────────────────────────────────────────────────────── */}
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.2px', marginBottom: 10 }}>
-            Feed da conferÃªncia
+            Feed da conferência
           </div>
 
           {/* Tabs */}
@@ -408,9 +403,9 @@ export function HomeScreen() {
             borderRadius: 12, padding: 3, marginBottom: 12,
           }}>
             {([
-              { key: 'comments' as FeedTab, label: 'ð¬ ComentÃ¡rios' },
-              { key: 'prayer' as FeedTab, label: 'ð OraÃ§Ãµes' },
-              { key: 'announcements' as FeedTab, label: 'ð¢ Avisos' },
+              { key: 'comments' as FeedTab, label: '💬 Comentários' },
+              { key: 'prayer' as FeedTab, label: '🙏 Orações' },
+              { key: 'announcements' as FeedTab, label: '📢 Avisos' },
             ]).map(tab => (
               <button
                 key={tab.key}
@@ -440,7 +435,7 @@ export function HomeScreen() {
             {filteredFeed.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '28px 0', color: 'var(--text3)' }}>
                 <div style={{ fontSize: 28, marginBottom: 8 }}>
-                  {feedTab === 'comments' ? 'ð¬' : feedTab === 'prayer' ? 'ð' : 'ð¢'}
+                  {feedTab === 'comments' ? '💬' : feedTab === 'prayer' ? '🙏' : '📢'}
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>Nenhum post ainda</div>
                 <div style={{ fontSize: 12, marginTop: 4 }}>Seja o primeiro!</div>
@@ -460,7 +455,7 @@ export function HomeScreen() {
                         width: 40, height: 40, borderRadius: 12, flexShrink: 0,
                         background: 'rgba(53,18,106,0.08)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                      }}>ð¢</div>
+                      }}>📢</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)', marginBottom: 2 }}>
                           {post.userName}
@@ -488,7 +483,7 @@ export function HomeScreen() {
                         <div style={{ flex: 1 }}>
                           <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>{post.userName}</div>
                           <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>
-                            {post.church} Â· {post.createdAt}
+                            {post.church} · {post.createdAt}
                           </div>
                         </div>
                       </div>
@@ -522,7 +517,7 @@ export function HomeScreen() {
                             fontWeight: 600, padding: '3px 0', fontFamily: 'var(--font-body)',
                           }}
                         >
-                          {post.liked ? 'â¤ï¸' : 'ð¤'} <span>{post.likes}</span>
+                          {post.liked ? '❤️' : '🤍'} <span>{post.likes}</span>
                         </button>
                         {post.reactions.map(r => (
                           <button
@@ -550,7 +545,7 @@ export function HomeScreen() {
         </div>
       </div>
 
-      {/* âââ SHEET BACKDROP ââââââââââââââââââââââââââââââââââââââââââââââââ */}
+      {/* ─── SHEET BACKDROP ──────────────────────────────────────────────── */}
       {sheet !== 'none' && (
         <div
           style={{
@@ -563,7 +558,7 @@ export function HomeScreen() {
         />
       )}
 
-      {/* âââ BOTTOM SHEET ââââââââââââââââââââââââââââââââââââââââââââââââââ */}
+      {/* ─── BOTTOM SHEET ────────────────────────────────────────────────── */}
       {sheet !== 'none' && (
         <div
           className="sheet-up"
@@ -580,7 +575,7 @@ export function HomeScreen() {
             <div style={{ width: 36, height: 4, background: 'var(--bg3)', borderRadius: 2 }} />
           </div>
 
-          {/* ââ PICK: type selection ââ */}
+          {/* ── PICK: type selection ── */}
           {sheet === 'pick' && (
             <div>
               <div style={{ padding: '20px 24px 8px' }}>
@@ -596,22 +591,22 @@ export function HomeScreen() {
                 {[
                   {
                     type: 'comment' as SheetType,
-                    icon: 'ð¬', title: 'ComentÃ¡rio no feed',
+                    icon: '💬', title: 'Comentário no feed',
                     desc: 'Compartilhe um pensamento com todos',
                     gradient: 'rgba(255,143,68,.15),rgba(250,20,98,.12)',
                     disabled: false,
                   },
                   {
                     type: 'live-question' as SheetType,
-                    icon: 'â', title: 'Pergunta ao palestrante',
-                    desc: 'Envie uma dÃºvida para a sessÃ£o ao vivo',
+                    icon: '❓', title: 'Pergunta ao palestrante',
+                    desc: 'Envie uma dúvida para a sessão ao vivo',
                     gradient: 'rgba(53,18,106,.12),rgba(77,193,231,.1)',
                     disabled: !liveSession,
                   },
                   {
                     type: 'prayer' as SheetType,
-                    icon: 'ð', title: 'Pedido de oraÃ§Ã£o',
-                    desc: 'PeÃ§a apoio da comunidade em oraÃ§Ã£o',
+                    icon: '🙏', title: 'Pedido de oração',
+                    desc: 'Peça apoio da comunidade em oração',
                     gradient: 'rgba(250,20,98,.1),rgba(53,18,106,.08)',
                     disabled: false,
                   },
@@ -652,13 +647,13 @@ export function HomeScreen() {
             </div>
           )}
 
-          {/* ââ COMMENT ââ */}
+          {/* ── COMMENT ── */}
           {sheet === 'comment' && (
             <div style={{ padding: '20px 20px 32px' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>ð¬ ComentÃ¡rio</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>💬 Comentário</div>
               <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>Compartilhe seus pensamentos com todos</div>
               <textarea
-                placeholder="O que vocÃª estÃ¡ pensando?"
+                placeholder="O que você está pensando?"
                 value={postContent}
                 onChange={e => setPostContent(e.target.value)}
                 rows={4}
@@ -684,23 +679,23 @@ export function HomeScreen() {
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                Publicar ð¬
+                Publicar 💬
               </button>
             </div>
           )}
 
-          {/* ââ LIVE QUESTION ââ */}
+          {/* ── LIVE QUESTION ── */}
           {sheet === 'live-question' && (
             <div style={{ padding: '20px 20px 32px' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>ð¤ Pergunta Ao Vivo</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>🎤 Pergunta Ao Vivo</div>
               <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>
-                {liveSession ? `Para: ${liveSession.title}` : 'Nenhuma sessÃ£o ao vivo no momento'}
+                {liveSession ? `Para: ${liveSession.title}` : 'Nenhuma sessão ao vivo no momento'}
               </div>
               {questionSent ? (
                 <div style={{ textAlign: 'center', padding: '28px 0' }}>
-                  <div style={{ fontSize: 40, marginBottom: 8 }}>â</div>
+                  <div style={{ fontSize: 40, marginBottom: 8 }}>✅</div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Pergunta enviada!</div>
-                  <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>O palestrante pode respondÃª-la ao vivo</div>
+                  <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>O palestrante pode respondê-la ao vivo</div>
                 </div>
               ) : (
                 <>
@@ -732,20 +727,20 @@ export function HomeScreen() {
                       fontFamily: 'var(--font-body)',
                     }}
                   >
-                    Enviar pergunta ð¤
+                    Enviar pergunta 🎤
                   </button>
                 </>
               )}
             </div>
           )}
 
-          {/* ââ PRAYER ââ */}
+          {/* ── PRAYER ── */}
           {sheet === 'prayer' && (
             <div style={{ padding: '20px 20px 32px' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>ð Pedido de OraÃ§Ã£o</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>🙏 Pedido de Oração</div>
               <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>Compartilhe e receba apoio da comunidade</div>
               <textarea
-                placeholder="Compartilhe seu pedido de oraÃ§Ã£o..."
+                placeholder="Compartilhe seu pedido de oração..."
                 value={postContent}
                 onChange={e => setPostContent(e.target.value)}
                 rows={4}
@@ -772,7 +767,7 @@ export function HomeScreen() {
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                Enviar pedido ð
+                Enviar pedido 🙏
               </button>
             </div>
           )}
