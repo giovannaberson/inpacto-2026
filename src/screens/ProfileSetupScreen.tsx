@@ -3,7 +3,7 @@ import { useAppStore } from '../store/appStore'
 import { checkAchievement } from '../lib/api'
 
 export function ProfileSetupScreen() {
-  const { navigateTo, updateProfile, loadInitialData, loadAchievements, authUserId } = useAppStore()
+  const { navigateTo, updateProfile, loadInitialData, loadAchievements, authUserId, completeMissionByKey } = useAppStore()
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
   const [city, setCity] = useState('')
@@ -19,6 +19,7 @@ export function ProfileSetupScreen() {
       if (authUserId) await loadInitialData(authUserId)
       // First-time profile setup: fire boas_vindas achievement in background
       checkAchievement('boas_vindas').then(() => loadAchievements()).catch(() => {})
+      completeMissionByKey('complete_profile')
       navigateTo('home')
     } catch {
       // ignore errors here - profile update is best-effort
