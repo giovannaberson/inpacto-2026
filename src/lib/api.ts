@@ -1,7 +1,9 @@
 import { supabase } from './supabase'
-import type { FeedPost, Mission, Note, Product, RankingUser, Session, User } from '../store/appStore'
+import type {
+  Achievement, EventConfig, FeedPost, Mission, Note, Product, RankingUser, Session, User,
+} from '../store/appStore'
 
-// ─── AUTH ────────────────────────────────────────────────────────────────────
+// âââ AUTH ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 export async function signIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -44,7 +46,30 @@ export async function verifyOtp(email: string, token: string) {
   return data
 }
 
-// ─── PROFILES ────────────────────────────────────────────────────────────────
+// âââ EVENT CONFIG âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+export async function getEventConfig(): Promise<EventConfig | null> {
+  const { data, error } = await supabase
+    .from('event_config')
+    .select('*')
+    .limit(1)
+    .single()
+
+  if (error || !data) return null
+
+  return {
+    id: data.id,
+    eventName: data.event_name,
+    eventStartDate: data.event_start_date,
+    eventEndDate: data.event_end_date,
+    totalDays: data.total_days,
+    tagline: data.tagline ?? 'Saturados do EspÃ­rito',
+    primaryColor: data.primary_color ?? '#FA1462',
+    logoUrl: data.logo_url ?? undefined,
+  }
+}
+
+// âââ PROFILES ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 export async function getProfile(userId: string): Promise<User | null> {
   const { data, error } = await supabase
@@ -84,16 +109,20 @@ export async function upsertProfile(userId: string, updates: Partial<User>) {
   if (error) throw error
 }
 
-export async function addXp(userId: string, amount: number) {
-  const { error } = await supabase.rpc('increment_xp', { user_id: userId, amount })
+// RPC: increment_xp uses auth.uid() internally â no userId needed
+export async function addXp(amount: number) {
+  const { error } = await supabase.rpc('increment_xp', { amount })
   if (error) {
-    const { data } = await supabase.from('profiles').select('xp').eq('id', userId).single()
+    // Fallback: direct update for the authenticated user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('profiles').select('xp').eq('id', user.id).single()
     const newXp = (data?.xp ?? 0) + amount
-    await supabase.from('profiles').update({ xp: newXp }).eq('id', userId)
+    await supabase.from('profiles').update({ xp: newXp }).eq('id', user.id)
   }
 }
 
-// ─── SESSIONS ─────────────────────────────────────────────────────────────────
+// âââ SESSIONS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 export async function getSessions(): Promise<Session[]> {
   const { data, error } = await supabase
@@ -113,14 +142,33 @@ export async function getSessions(): Promise<Session[]> {
     startTime: s.start_time,
     endTime: s.end_time,
     description: s.description ?? '',
+    isLive: s.is_live ?? false,
   }))
 }
 
-// ─── MISSIONS ─────────────────────────────────────────────────────────────────
+// RPC: get_current_session â returns the session with is_live = true
+export async function getLiveSession(): Promise<Session | null> {
+  const { data, error } = await supabase.rpc('get_current_session')
+  if (error || !data || data.length === 0) return null
+  const s = data[0]
+  return {
+    id: s.id,
+    day: s.day,
+    title: s.title,
+    speaker: s.speaker ?? '',
+    type: s.type as Session['type'],
+    startTime: s.start_time,
+    endTime: s.end_time,
+    description: s.description ?? '',
+    isLive: true,
+  }
+}
+
+// âââ MISSIONS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 export async function getMissionsWithStatus(userId: string): Promise<Mission[]> {
   const [missionsRes, completedRes] = await Promise.all([
-    supabase.from('missions').select('*').order('day').order('xp_reward'),
+    supabase.from('missions').select('*').order('day').order('order_index'),
     supabase.from('user_missions').select('mission_id').eq('user_id', userId),
   ])
 
@@ -129,6 +177,7 @@ export async function getMissionsWithStatus(userId: string): Promise<Mission[]> 
 
   return missions.map(m => ({
     id: m.id,
+    key: m.key ?? '',
     title: m.title,
     description: m.description ?? '',
     xpReward: m.xp_reward,
@@ -142,11 +191,54 @@ export async function completeMission(userId: string, missionId: string, xpRewar
   const { error } = await supabase
     .from('user_missions')
     .insert({ user_id: userId, mission_id: missionId })
+
   if (error) throw error
-  await addXp(userId, xpReward)
+
+  // RPC uses auth.uid() â no need to pass userId
+  await addXp(xpReward)
 }
 
-// ─── FEED ──────────────────────────────────────────────────────────────────────
+// âââ ACHIEVEMENTS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+export async function getAchievements(userId: string): Promise<Achievement[]> {
+  const [achievementsRes, unlockedRes] = await Promise.all([
+    supabase.from('achievements').select('*').order('created_at'),
+    supabase.from('user_achievements').select('achievement_id, unlocked_at').eq('user_id', userId),
+  ])
+
+  const achievements = achievementsRes.data ?? []
+  const unlockedMap = new Map(
+    (unlockedRes.data ?? []).map(ua => [ua.achievement_id, ua.unlocked_at as string])
+  )
+
+  return achievements.map(a => ({
+    id: a.id,
+    key: a.key,
+    icon: a.icon,
+    title: a.title,
+    description: a.description,
+    unlocked: unlockedMap.has(a.id),
+    unlockedAt: unlockedMap.get(a.id),
+  }))
+}
+
+// RPC: check and unlock an achievement by key
+export async function checkAchievement(key: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('check_and_unlock_achievement', { achievement_key: key })
+  if (error) return false
+  return data === true
+}
+
+// âââ LIVE QUESTIONS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+export async function submitLiveQuestion(userId: string, sessionId: string, content: string) {
+  const { error } = await supabase
+    .from('live_questions')
+    .insert({ user_id: userId, session_id: sessionId, content })
+  if (error) throw error
+}
+
+// âââ FEED ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 export async function getFeed(userId: string): Promise<FeedPost[]> {
   const { data: posts, error } = await supabase
@@ -175,11 +267,11 @@ export async function getFeed(userId: string): Promise<FeedPost[]> {
     }
 
     const name = post.user_id === '00000000-0000-0000-0000-000000000000'
-      ? '📢 Organização'
-      : (profile?.name ?? 'Usuário')
+      ? 'ð¢ OrganizaÃ§Ã£o'
+      : (profile?.name ?? 'UsuÃ¡rio')
 
-    const initials = name === '📢 Organização'
-      ? '📢'
+    const initials = name === 'ð¢ OrganizaÃ§Ã£o'
+      ? 'ð¢'
       : name.split(' ').slice(0, 2).map((w: string) => w[0]).join('')
 
     const now = new Date()
@@ -187,9 +279,9 @@ export async function getFeed(userId: string): Promise<FeedPost[]> {
     const diffMs = now.getTime() - created.getTime()
     const diffMin = Math.floor(diffMs / 60000)
     const timeLabel = diffMin < 1 ? 'agora'
-      : diffMin < 60 ? `${diffMin}min atrás`
-      : diffMin < 1440 ? `${Math.floor(diffMin / 60)}h atrás`
-      : `${Math.floor(diffMin / 1440)}d atrás`
+      : diffMin < 60 ? `${diffMin}min atrÃ¡s`
+      : diffMin < 1440 ? `${Math.floor(diffMin / 60)}h atrÃ¡s`
+      : `${Math.floor(diffMin / 1440)}d atrÃ¡s`
 
     return {
       id: post.id,
@@ -234,27 +326,28 @@ export async function toggleReaction(userId: string, postId: string, emoji: stri
   }
 }
 
-// ─── RANKING ──────────────────────────────────────────────────────────────────
+// âââ RANKING ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 export async function getRanking(): Promise<RankingUser[]> {
   const { data, error } = await supabase
     .from('ranking')
     .select('*')
+    .order('position')
     .limit(50)
 
   if (error || !data) return []
 
-  return data.map((r, i) => ({
+  return data.map(r => ({
     id: r.id,
-    name: r.name ?? 'Usuário',
+    name: r.name ?? 'UsuÃ¡rio',
     initials: (r.name ?? 'U').split(' ').slice(0, 2).map((w: string) => w[0]).join(''),
     church: r.church ?? '',
     xp: r.xp ?? 0,
-    position: i + 1,
+    position: r.position ?? 0,
   }))
 }
 
-// ─── PRODUCTS ─────────────────────────────────────────────────────────────────
+// âââ PRODUCTS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 export async function getProducts(userId: string): Promise<Product[]> {
   const [productsRes, wishlistRes] = await Promise.all([
@@ -286,7 +379,7 @@ export async function toggleWishlist(userId: string, productId: string, currentl
   }
 }
 
-// ─── NOTES ────────────────────────────────────────────────────────────────────
+// âââ NOTES ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 export async function getNotes(userId: string, sessionsData: Session[]): Promise<Note[]> {
   const { data, error } = await supabase
@@ -303,7 +396,7 @@ export async function getNotes(userId: string, sessionsData: Session[]): Promise
     const timeStr = updated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     return {
       sessionId: n.session_id,
-      sessionTitle: session?.title ?? 'Sessão',
+      sessionTitle: session?.title ?? 'SessÃ£o',
       content: n.content ?? '',
       updatedAt: timeStr,
     }
