@@ -6,7 +6,7 @@ export function NoteEditorScreen() {
   const session = sessions.find(s => s.id === activeNoteSessionId)
   const existingNote = notes.find(n => n.sessionId === activeNoteSessionId)
   const [content, setContent] = useState(existingNote?.content ?? '')
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useState<null | boolean>(null)
 
   const handleBack = () => {
     saveNote(activeNoteSessionId!, content)
@@ -42,7 +42,7 @@ export function NoteEditorScreen() {
             ← Voltar
           </button>
           <div style={{ fontSize: 11, color: saved ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)', fontWeight: 600 }}>
-            {saved ? '✓ Salvo' : 'Salvando...'}
+            {saved === null ? null : saved ? '✓ Salvo' : 'Salvando...'}
           </div>
         </div>
         <div style={{ marginTop: 10 }}>
