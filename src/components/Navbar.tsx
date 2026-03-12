@@ -4,6 +4,7 @@ import type { Screen } from '../store/appStore'
 
 export function Navbar() {
   const { currentScreen, navigateTo, setAddSheetOpen } = useAppStore()
+
   const authScreens: Screen[] = ['splash', 'login', 'signup', 'verify', 'profile-setup']
   if (authScreens.includes(currentScreen)) return null
 
@@ -14,10 +15,19 @@ export function Navbar() {
         key={screen}
         onClick={() => navigateTo(screen)}
         style={{
-          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-          gap: 3, padding: '5px 14px', border: 'none', background: 'none',
-          cursor: 'pointer', color: active ? 'var(--pink)' : 'var(--text3)',
-          fontFamily: 'var(--font-body)', borderRadius: 10, transition: 'color 0.18s',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 3,
+          padding: '5px 14px',
+          border: 'none',
+          background: 'none',
+          cursor: 'pointer',
+          color: active ? 'var(--pink)' : 'var(--text3)',
+          fontFamily: 'var(--font-body)',
+          borderRadius: 10,
+          transition: 'color 0.18s',
         }}
       >
         {icon}
@@ -28,43 +38,60 @@ export function Navbar() {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-around',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-around',
       padding: '4px 8px calc(var(--safe-bottom) + 6px)',
-      background: 'var(--surface)', borderTop: '1px solid var(--border)',
-      flexShrink: 0, zIndex: 50, position: 'relative', overflow: 'visible',
+      background: 'var(--surface)',
+      borderTop: '1px solid var(--border)',
+      flexShrink: 0,
+      zIndex: 50,
+      position: 'relative',
+      overflow: 'visible',
     }}>
-
-      {/* Início */}
-      {navItem('home', 'Início',
-        <svg viewBox="0 0 24 24" fill={currentScreen === 'home' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} width={20} height={20}>
-          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-        </svg>
-      )}
+      {/* Inicio */}
+      {navItem('home', 'Inicio', <svg viewBox="0 0 24 24" fill={currentScreen === 'home' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} width={20} height={20}>
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+      </svg>)}
 
       {/* Agenda */}
-      {navItem('agenda', 'Agenda',
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={20} height={20}>
-          <rect x={3} y={4} width={18} height={18} rx={2} />
-          <line x1={16} y1={2} x2={16} y2={6} />
-          <line x1={8} y1={2} x2={8} y2={6} />
-          <line x1={3} y1={10} x2={21} y2={10} />
-        </svg>
-      )}
+      {navItem('agenda', 'Agenda', <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={20} height={20}>
+        <rect x={3} y={4} width={18} height={18} rx={2} />
+        <line x1={16} y1={2} x2={16} y2={6} />
+        <line x1={8} y1={2} x2={8} y2={6} />
+        <line x1={3} y1={10} x2={21} y2={10} />
+      </svg>)}
 
-      {/* FAB — opens add-post sheet */}
+      {/* FAB - opens add-post sheet, navigates to home first if needed */}
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', paddingBottom: 8 }}>
         <button
-          onClick={() => setAddSheetOpen(true)}
+          onClick={() => {
+            if (currentScreen !== 'home') navigateTo('home')
+            setAddSheetOpen(true)
+          }}
           style={{
-            width: 48, height: 48, background: 'var(--grad-warm)',
-            borderRadius: '50%', border: 'none',
+            width: 48,
+            height: 48,
+            background: 'var(--grad-warm)',
+            borderRadius: '50%',
+            border: 'none',
             boxShadow: '0 4px 14px rgba(250,20,98,0.35)',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transform: 'translateY(-12px)', transition: 'transform 0.15s, box-shadow 0.15s',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: 'translateY(-12px)',
+            transition: 'transform 0.15s, box-shadow 0.15s',
             color: '#fff',
           }}
-          onTouchStart={(e) => { e.currentTarget.style.transform = 'translateY(-12px) scale(0.92)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(250,20,98,0.25)' }}
-          onTouchEnd={(e) => { e.currentTarget.style.transform = 'translateY(-12px)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(250,20,98,0.35)' }}
+          onTouchStart={(e) => {
+            e.currentTarget.style.transform = 'translateY(-12px) scale(0.92)'
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(250,20,98,0.25)'
+          }}
+          onTouchEnd={(e) => {
+            e.currentTarget.style.transform = 'translateY(-12px)'
+            e.currentTarget.style.boxShadow = '0 4px 14px rgba(250,20,98,0.35)'
+          }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" width={20} height={20}>
             <line x1={12} y1={5} x2={12} y2={19} />
@@ -74,24 +101,19 @@ export function Navbar() {
       </div>
 
       {/* Loja */}
-      {navItem('store', 'Loja',
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={20} height={20}>
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-          <line x1={3} y1={6} x2={21} y2={6} />
-          <path d="M16 10a4 4 0 01-8 0" />
-        </svg>
-      )}
+      {navItem('store', 'Loja', <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={20} height={20}>
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+        <line x1={3} y1={6} x2={21} y2={6} />
+        <path d="M16 10a4 4 0 01-8 0" />
+      </svg>)}
 
       {/* Notas */}
-      {navItem('notes', 'Notas',
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={20} height={20}>
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-          <polyline points="14,2 14,8 20,8" />
-          <line x1={16} y1={13} x2={8} y2={13} />
-          <line x1={16} y1={17} x2={8} y2={17} />
-        </svg>
-      )}
-
+      {navItem('notes', 'Notas', <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={20} height={20}>
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14,2 14,8 20,8" />
+        <line x1={16} y1={13} x2={8} y2={13} />
+        <line x1={16} y1={17} x2={8} y2={17} />
+      </svg>)}
     </div>
   )
 }
