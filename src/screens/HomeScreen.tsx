@@ -1,23 +1,28 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
+
 type FeedTab = 'comments' | 'prayer' | 'announcements'
 type SheetType = 'none' | 'pick' | 'comment' | 'live-question' | 'prayer'
 
+// Session types that allow Q&A
+const QA_TYPES = ['plenaria', 'oficina', 'talkshow']
+
 // Reactions defined in the mock
 const LIVE_REACTIONS = [
-  { emoji: '❤️', label: 'Amei' },
-  { emoji: '🙏', label: 'Amém' },
-  { emoji: '✨', label: 'Abençoado' },
-  { emoji: '💡', label: 'Inspirado' },
-  { emoji: '🙌', label: 'Louvor' },
+  { emoji: '\u2764\ufe0f', label: 'Amei' },
+  { emoji: '\uD83D\uDE4F', label: 'Amem' },
+  { emoji: '\u2728', label: 'Abencado' },
+  { emoji: '\uD83D\uDCA1', label: 'Inspirado' },
+  { emoji: '\uD83D\uDE4C', label: 'Louvor' },
 ]
+
+type ProfileModal = { name: string; initials: string; church: string }
 
 export function HomeScreen() {
   const {
     missions, feed, eventConfig, liveSession,
     toggleLike, addReaction, addPost, submitLiveQuestion,
-    addSheetOpen, setAddSheetOpen,
-    completeMissionByKey,
+    addSheetOpen, setAddSheetOpen, completeMissionByKey,
   } = useAppStore()
 
   const [feedTab, setFeedTab] = useState<FeedTab>('comments')
@@ -26,8 +31,9 @@ export function HomeScreen() {
   const [missionsExpanded, setMissionsExpanded] = useState(false)
   const [questionSent, setQuestionSent] = useState(false)
   const [activeReactions, setActiveReactions] = useState<Record<string, boolean>>({})
+  const [profileModal, setProfileModal] = useState<ProfileModal | null>(null)
 
-  // Sync addSheetOpen store flag → local sheet state
+  // Sync addSheetOpen store flag to local sheet state
   useMemo(() => {
     if (addSheetOpen) {
       setSheet('pick')
@@ -38,7 +44,7 @@ export function HomeScreen() {
   // Trigger checkin mission when user opens the home screen
   useEffect(() => {
     completeMissionByKey('checkin')
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Calculate current event day from eventConfig
@@ -57,6 +63,8 @@ export function HomeScreen() {
   const completedCount = todayMissions.filter(m => m.completed).length
   const totalXp = todayMissions.reduce((sum, m) => sum + m.xpReward, 0)
   const progressPct = todayMissions.length > 0 ? (completedCount / todayMissions.length) * 100 : 0
+
+  const liveAllowsQA = liveSession ? QA_TYPES.includes(liveSession.type) : false
 
   const handleSubmitPost = async () => {
     if (!postContent.trim()) return
@@ -92,25 +100,23 @@ export function HomeScreen() {
   // Short label for mission node (first word of title, 6 chars max)
   const shortLabel = (title: string) => {
     const word = title.split(' ')[0]
-    return word.length > 6 ? word.slice(0, 5) + '…' : word
+    return word.length > 6 ? word.slice(0, 5) + '\u2026' : word
   }
 
   return (
     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-
       <div className="scroll-area" style={{ padding: '14px 14px 0' }}>
 
-        {/* ─── MISSIONS CARD ─────────────────────────────────────────────── */}
+        {/* MISSIONS CARD */}
         <div style={{
           background: 'var(--surface)', border: '1px solid var(--border)',
           borderRadius: 18, overflow: 'hidden', marginBottom: 14,
         }}>
-
           {/* Header */}
           <div style={{ padding: '16px 16px 0' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.2px' }}>
-                Missões do dia
+                Missoes do dia
               </div>
               {totalXp > 0 && (
                 <div style={{
@@ -125,54 +131,42 @@ export function HomeScreen() {
             {/* Milestone track */}
             {todayMissions.length > 0 && (
               <div style={{ position: 'relative', padding: '0 8px 4px' }}>
-                {/* Background track */}
                 <div style={{
                   position: 'absolute', top: 17, left: 26, right: 26,
                   height: 5, background: 'var(--bg3)', borderRadius: 3,
                 }} />
-                {/* Filled track */}
                 <div style={{
                   position: 'absolute', top: 17, left: 26,
                   width: `calc((100% - 52px) * ${progressPct / 100})`,
                   height: 5, background: 'linear-gradient(90deg, #FF8F44, #FA1462)',
                   borderRadius: 3, transition: 'width 0.5s ease',
                 }} />
-                {/* Nodes */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
                   {todayMissions.map((m) => {
                     const isDone = m.completed
                     const isCurrent = !isDone && todayMissions.slice(0, todayMissions.indexOf(m)).every(p => p.completed)
                     return (
                       <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                        <button
-                          style={{
-                            width: 34, height: 34, borderRadius: '50%',
-                            cursor: 'default',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: isDone
-                              ? 'linear-gradient(135deg, #FF8F44, #FA1462)'
-                              : isCurrent ? 'var(--surface)' : 'var(--bg2)',
-                            border: isCurrent ? '2.5px solid var(--pink)' : isDone ? 'none' : '2px solid var(--border)',
-                            boxShadow: isDone ? '0 3px 10px rgba(250,20,98,0.28)' : 'none',
-                            transition: 'all 0.25s',
-                          } as React.CSSProperties}
-                          title={m.title}
-                        >
+                        <button style={{
+                          width: 34, height: 34, borderRadius: '50%', cursor: 'default',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: isDone ? 'linear-gradient(135deg, #FF8F44, #FA1462)' : isCurrent ? 'var(--surface)' : 'var(--bg2)',
+                          border: isCurrent ? '2.5px solid var(--pink)' : isDone ? 'none' : '2px solid var(--border)',
+                          boxShadow: isDone ? '0 3px 10px rgba(250,20,98,0.28)' : 'none',
+                          transition: 'all 0.25s',
+                        } as React.CSSProperties} title={m.title}>
                           {isDone ? (
                             <svg viewBox="0 0 14 14" fill="none" width={13} height={13}>
                               <path d="M2.5 7l3 3 6-5.5" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           ) : isCurrent ? (
                             <div style={{
-                              width: 9, height: 9, borderRadius: '50%', background: 'var(--pink)',
-                              animation: 'mqPulse 1.5s ease-in-out infinite',
+                              width: 9, height: 9, borderRadius: '50%',
+                              background: 'var(--pink)', animation: 'mqPulse 1.5s ease-in-out infinite',
                             }} />
                           ) : null}
                         </button>
-                        <span style={{
-                          fontSize: 9, fontWeight: 700,
-                          color: isDone ? 'var(--pink)' : 'var(--text3)',
-                        }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: isDone ? 'var(--pink)' : 'var(--text3)' }}>
                           {shortLabel(m.title)}
                         </span>
                       </div>
@@ -186,26 +180,19 @@ export function HomeScreen() {
           {/* Expanded list */}
           <div style={{
             maxHeight: missionsExpanded ? 500 : 0,
-            overflow: 'hidden',
-            transition: 'max-height 0.38s cubic-bezier(0.4,0,0.2,1)',
+            overflow: 'hidden', transition: 'max-height 0.38s cubic-bezier(0.4,0,0.2,1)',
           }}>
             <div style={{ paddingTop: 10 }}>
               {todayMissions.map((m, i) => (
                 <div key={m.id}>
-                  <div
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '11px 14px', background: 'var(--surface)',
-                      cursor: 'default',
-                    }}
-                  >
-                    {/* Icon circle */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '11px 14px', background: 'var(--surface)', cursor: 'default',
+                  }}>
                     <div style={{
                       width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: m.completed
-                        ? 'linear-gradient(135deg, #FF8F44, #FA1462)'
-                        : 'var(--bg2)',
+                      background: m.completed ? 'linear-gradient(135deg, #FF8F44, #FA1462)' : 'var(--bg2)',
                       border: m.completed ? 'none' : '2px solid var(--border)',
                     }}>
                       {m.completed && (
@@ -214,35 +201,27 @@ export function HomeScreen() {
                         </svg>
                       )}
                     </div>
-
-                    {/* Label */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
                         fontSize: 13, fontWeight: 600,
                         color: m.completed ? 'var(--text3)' : 'var(--text)',
                         textDecoration: m.completed ? 'line-through' : 'none',
                         textDecorationColor: 'var(--bg3)',
-                      }}>
-                        {m.title}
-                      </div>
+                      }}>{m.title}</div>
                       <div style={{
                         fontSize: 11, fontWeight: 600, marginTop: 1,
                         color: m.completed ? 'var(--green)' : 'var(--text3)',
                       }}>
-                        {m.completed ? 'Concluída ✓' : 'Não iniciada'}
+                        {m.completed ? 'Concluida' : 'Nao iniciada'}
                       </div>
                     </div>
-
-                    {/* XP badge */}
                     <div style={{
                       fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
                       padding: '3px 8px', borderRadius: 6,
                       background: m.completed ? 'rgba(26,153,96,0.08)' : 'var(--bg2)',
                       border: `1px solid ${m.completed ? 'rgba(26,153,96,0.2)' : 'var(--border)'}`,
                       color: m.completed ? 'var(--green)' : 'var(--text3)',
-                    }}>
-                      +{m.xpReward} XP
-                    </div>
+                    }}>+{m.xpReward} XP</div>
                   </div>
                   {i < todayMissions.length - 1 && (
                     <div style={{ height: 1, background: 'var(--border2)', margin: '0 14px' }} />
@@ -257,11 +236,9 @@ export function HomeScreen() {
             onClick={() => setMissionsExpanded(v => !v)}
             style={{
               width: '100%', padding: '12px 16px', background: 'none', border: 'none',
-              borderTop: '1px solid var(--border2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              cursor: 'pointer', fontFamily: 'var(--font-body)',
-              fontSize: 13, fontWeight: 700, color: 'var(--text3)',
-              transition: 'color 0.2s',
+              borderTop: '1px solid var(--border2)', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: 5, cursor: 'pointer', fontFamily: 'var(--font-body)',
+              fontSize: 13, fontWeight: 700, color: 'var(--text3)', transition: 'color 0.2s',
             }}
           >
             <span>{missionsExpanded ? 'Fechar' : 'Ver todas'}</span>
@@ -272,29 +249,25 @@ export function HomeScreen() {
           </button>
         </div>
 
-        {/* ─── LIVE CARD ─────────────────────────────────────────────────── */}
+        {/* LIVE CARD */}
         {liveSession ? (
           <div style={{
-            background: '#1A0D2E',
-            borderRadius: 16, padding: 16,
-            border: '1px solid rgba(255,255,255,0.06)',
-            marginBottom: 14, position: 'relative', overflow: 'hidden',
+            background: '#1A0D2E', borderRadius: 16, padding: 16,
+            border: '1px solid rgba(255,255,255,0.06)', marginBottom: 14,
+            position: 'relative', overflow: 'hidden',
           }}>
-            {/* Decorative circle */}
             <div style={{
-              position: 'absolute', top: -50, right: -50,
-              width: 160, height: 160,
+              position: 'absolute', top: -50, right: -50, width: 160, height: 160,
               background: 'rgba(255,255,255,0.04)', borderRadius: '50%',
             }} />
 
-            {/* Top row: AO VIVO + viewer count */}
+            {/* Top row */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                   <div style={{
                     width: 7, height: 7, borderRadius: '50%', background: '#FF4757',
-                    animation: 'blink 1.4s ease infinite',
-                    boxShadow: '0 0 5px rgba(255,71,87,0.6)',
+                    animation: 'blink 1.4s ease infinite', boxShadow: '0 0 5px rgba(255,71,87,0.6)',
                   }} className="live-dot" />
                   <span style={{
                     fontSize: 10, fontWeight: 700, letterSpacing: '1.2px',
@@ -310,25 +283,26 @@ export function HomeScreen() {
                   </div>
                 )}
               </div>
-              {/* Online pill */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: 20, padding: '5px 10px',
-                fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', flexShrink: 0,
+                borderRadius: 20, padding: '5px 10px', fontSize: 12, fontWeight: 700,
+                color: 'rgba(255,255,255,0.85)', flexShrink: 0,
               }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#FF4757', animation: 'blink 1.4s ease infinite' }} />
+                <div style={{
+                  width: 5, height: 5, borderRadius: '50%', background: '#FF4757',
+                  animation: 'blink 1.4s ease infinite',
+                }} />
                 <span>Ao vivo</span>
               </div>
             </div>
 
-            {/* Divider */}
             <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', marginBottom: 14 }} />
 
             {/* Reactions */}
             <div style={{
-              fontSize: 10, fontWeight: 700, letterSpacing: '1px',
-              textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: 8,
+              fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.6)', marginBottom: 8,
             }}>Reagir</div>
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 12, scrollbarWidth: 'none' }}>
               {LIVE_REACTIONS.map(r => {
@@ -341,11 +315,9 @@ export function HomeScreen() {
                       flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5,
                       background: active ? 'rgba(250,20,98,0.3)' : 'rgba(255,255,255,0.08)',
                       border: `1px solid ${active ? 'rgba(250,20,98,0.5)' : 'rgba(255,255,255,0.14)'}`,
-                      borderRadius: 20, padding: '6px 11px',
-                      fontSize: 12, fontWeight: 700,
-                      color: active ? '#fff' : 'rgba(255,255,255,0.8)',
-                      cursor: 'pointer', fontFamily: 'var(--font-body)',
-                      transition: 'background 0.15s, border-color 0.15s',
+                      borderRadius: 20, padding: '6px 11px', fontSize: 12, fontWeight: 700,
+                      color: active ? '#fff' : 'rgba(255,255,255,0.8)', cursor: 'pointer',
+                      fontFamily: 'var(--font-body)', transition: 'background 0.15s, border-color 0.15s',
                       whiteSpace: 'nowrap',
                     }}
                   >
@@ -355,53 +327,52 @@ export function HomeScreen() {
               })}
             </div>
 
-            {/* Inline Q&A */}
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <input
-                placeholder="Pergunta para o palestrante..."
-                onFocus={() => setSheet('live-question')}
-                readOnly
-                style={{
-                  flex: 1, background: 'rgba(255,255,255,0.18)',
-                  border: '1.5px solid rgba(255,255,255,0.3)', borderRadius: 10,
-                  padding: '10px 12px', fontSize: 13, fontFamily: 'var(--font-body)',
-                  color: '#fff', outline: 'none', cursor: 'text',
-                }}
-              />
-              <button
-                onClick={() => setSheet('live-question')}
-                style={{
-                  width: 38, height: 38, background: '#fff', border: 'none',
-                  borderRadius: 10, color: 'var(--pink)', fontSize: 18, fontWeight: 900,
-                  cursor: 'pointer', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                ↑
-              </button>
-            </div>
+            {/* Inline Q&A — only for plenaria, oficina, talkshow */}
+            {liveAllowsQA && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  placeholder="Pergunta para o palestrante..."
+                  onFocus={() => setSheet('live-question')}
+                  readOnly
+                  style={{
+                    flex: 1, background: 'rgba(255,255,255,0.18)',
+                    border: '1.5px solid rgba(255,255,255,0.3)', borderRadius: 10,
+                    padding: '10px 12px', fontSize: 13, fontFamily: 'var(--font-body)',
+                    color: '#fff', outline: 'none', cursor: 'text',
+                  }}
+                />
+                <button
+                  onClick={() => setSheet('live-question')}
+                  style={{
+                    width: 38, height: 38, background: '#fff', border: 'none', borderRadius: 10,
+                    color: 'var(--pink)', fontSize: 18, fontWeight: 900, cursor: 'pointer',
+                    flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  \u2191
+                </button>
+              </div>
+            )}
           </div>
         ) : (
-          /* No live session */
           <div style={{
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 16, padding: '14px 18px',
-            marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12,
+            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16,
+            padding: '14px 18px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12,
           }}>
-            <div style={{ fontSize: 28 }}>📡</div>
+            <div style={{ fontSize: 28 }}>\uD83D\uDCE1</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Nenhuma sessão ao vivo</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Nenhuma sessao ao vivo</div>
               <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
-                {eventConfig?.tagline ?? 'Confira a agenda para os próximos horários'}
+                {eventConfig?.tagline ?? 'Confira a agenda para os proximos horarios'}
               </div>
             </div>
           </div>
         )}
 
-        {/* ─── FEED ─────────────────────────────────────────────────────── */}
+        {/* FEED */}
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.2px', marginBottom: 10 }}>
-            Feed da conferência
+            Feed da conferencia
           </div>
 
           {/* Tabs */}
@@ -410,19 +381,17 @@ export function HomeScreen() {
             borderRadius: 12, padding: 3, marginBottom: 12,
           }}>
             {([
-              { key: 'comments' as FeedTab, label: '💬 Comentários' },
-              { key: 'prayer' as FeedTab, label: '🙏 Orações' },
-              { key: 'announcements' as FeedTab, label: '📢 Avisos' },
+              { key: 'comments' as FeedTab, label: '\uD83D\uDCAC Comentarios' },
+              { key: 'prayer' as FeedTab, label: '\uD83D\uDE4F Oracoes' },
+              { key: 'announcements' as FeedTab, label: '\uD83D\uDCE2 Avisos' },
             ]).map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setFeedTab(tab.key)}
                 style={{
-                  flex: 1, padding: '7px 4px', border: 'none',
-                  borderRadius: 9,
-                  fontSize: 11, fontWeight: 700,
-                  fontFamily: 'var(--font-body)',
-                  cursor: 'pointer', transition: 'all 0.18s',
+                  flex: 1, padding: '7px 4px', border: 'none', borderRadius: 9,
+                  fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-body)', cursor: 'pointer',
+                  transition: 'all 0.18s',
                   background: feedTab === tab.key ? 'var(--surface)' : 'transparent',
                   color: feedTab === tab.key ? 'var(--text)' : 'var(--text3)',
                   boxShadow: feedTab === tab.key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
@@ -436,13 +405,12 @@ export function HomeScreen() {
           {/* Feed card */}
           <div style={{
             background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)', padding: '4px 14px',
-            boxShadow: 'var(--shadow-sm)',
+            borderRadius: 'var(--radius)', padding: '4px 14px', boxShadow: 'var(--shadow-sm)',
           }}>
             {filteredFeed.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '28px 0', color: 'var(--text3)' }}>
                 <div style={{ fontSize: 28, marginBottom: 8 }}>
-                  {feedTab === 'comments' ? '💬' : feedTab === 'prayer' ? '🙏' : '📢'}
+                  {feedTab === 'comments' ? '\uD83D\uDCAC' : feedTab === 'prayer' ? '\uD83D\uDE4F' : '\uD83D\uDCE2'}
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>Nenhum post ainda</div>
                 <div style={{ fontSize: 12, marginTop: 4 }}>Seja o primeiro!</div>
@@ -454,15 +422,12 @@ export function HomeScreen() {
                   borderBottom: idx < filteredFeed.length - 1 ? '1px solid var(--border2)' : 'none',
                 }}>
                   {post.type === 'announcement' ? (
-                    /* Announcement */
-                    <div style={{
-                      display: 'flex', gap: 12, alignItems: 'flex-start',
-                    }}>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                       <div style={{
                         width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-                        background: 'rgba(53,18,106,0.08)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                      }}>📢</div>
+                        background: 'rgba(53,18,106,0.08)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                      }}>\uD83D\uDCE2</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)', marginBottom: 2 }}>
                           {post.userName}
@@ -477,11 +442,20 @@ export function HomeScreen() {
                     </div>
                   ) : (
                     <>
-                      {/* Header */}
-                      <div style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start' }}>
+                      {/* Clickable author header */}
+                      <button
+                        onClick={() => setProfileModal({ name: post.userName, initials: post.userInitials, church: post.church })}
+                        style={{
+                          display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start',
+                          background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                          fontFamily: 'var(--font-body)', textAlign: 'left', width: '100%',
+                        }}
+                      >
                         <div style={{
                           width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
-                          background: post.type === 'prayer' ? 'linear-gradient(135deg,#35126A,#FA1462)' : 'var(--grad-warm)',
+                          background: post.type === 'prayer'
+                            ? 'linear-gradient(135deg,#35126A,#FA1462)'
+                            : 'var(--grad-warm)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontWeight: 700, fontSize: 12, color: '#fff',
                         }}>
@@ -493,17 +467,15 @@ export function HomeScreen() {
                             {post.church} · {post.createdAt}
                           </div>
                         </div>
-                      </div>
+                      </button>
 
                       {/* Content */}
                       {post.type === 'prayer' ? (
-                        /* prayer-block style */
                         <div style={{
                           background: 'linear-gradient(135deg,rgba(53,18,106,0.06),rgba(77,193,231,0.04))',
-                          borderLeft: '3px solid rgba(53,18,106,0.3)',
-                          borderRadius: '0 8px 8px 0',
-                          padding: '10px 12px', marginBottom: 10,
-                          fontSize: 14, color: 'var(--text2)', lineHeight: 1.6, fontStyle: 'italic',
+                          borderLeft: '3px solid rgba(53,18,106,0.3)', borderRadius: '0 8px 8px 0',
+                          padding: '10px 12px', marginBottom: 10, fontSize: 14,
+                          color: 'var(--text2)', lineHeight: 1.6, fontStyle: 'italic',
                         }}>
                           {post.content}
                         </div>
@@ -518,21 +490,22 @@ export function HomeScreen() {
                         <button
                           onClick={() => toggleLike(post.id)}
                           style={{
-                            display: 'flex', alignItems: 'center', gap: 4,
-                            fontSize: 12, color: post.liked ? 'var(--pink)' : 'var(--text3)',
+                            display: 'flex', alignItems: 'center', gap: 4, fontSize: 12,
+                            color: post.liked ? 'var(--pink)' : 'var(--text3)',
                             background: 'none', border: 'none', cursor: 'pointer',
                             fontWeight: 600, padding: '3px 0', fontFamily: 'var(--font-body)',
                           }}
                         >
-                          {post.liked ? '❤️' : '🤍'} <span>{post.likes}</span>
+                          {post.liked ? '\u2764\ufe0f' : '\uD83E\uDD0D'}
+                          <span>{post.likes}</span>
                         </button>
                         {post.reactions.map(r => (
                           <button
                             key={r.emoji}
                             onClick={() => addReaction(post.id, r.emoji)}
                             style={{
-                              display: 'flex', alignItems: 'center', gap: 4,
-                              fontSize: 12, color: r.reacted ? 'var(--text)' : 'var(--text3)',
+                              display: 'flex', alignItems: 'center', gap: 4, fontSize: 12,
+                              color: r.reacted ? 'var(--text)' : 'var(--text3)',
                               background: r.reacted ? 'var(--bg2)' : 'none',
                               border: 'none', cursor: 'pointer', fontWeight: 600,
                               padding: '2px 6px', borderRadius: 20,
@@ -552,70 +525,109 @@ export function HomeScreen() {
         </div>
       </div>
 
-      {/* ─── SHEET BACKDROP ──────────────────────────────────────────────── */}
+      {/* PROFILE MODAL */}
+      {profileModal && (
+        <>
+          <div
+            style={{
+              position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)',
+              zIndex: 95, backdropFilter: 'blur(3px)',
+            }}
+            className="fade-in"
+            onClick={() => setProfileModal(null)}
+          />
+          <div
+            className="sheet-up"
+            style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0,
+              background: 'var(--surface)', borderRadius: '24px 24px 0 0',
+              zIndex: 96, padding: '0 20px 40px',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0' }}>
+              <div style={{ width: 36, height: 4, background: 'var(--bg3)', borderRadius: 2 }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 68, height: 68, borderRadius: '50%',
+                background: 'var(--grad-warm)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 24, fontWeight: 700, color: '#fff',
+              }}>
+                {profileModal.initials}
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>{profileModal.name}</div>
+              {profileModal.church && (
+                <div style={{
+                  fontSize: 13, color: 'var(--text3)', fontWeight: 600,
+                  display: 'flex', alignItems: 'center', gap: 5,
+                }}>
+                  <span>\u26EA</span>
+                  <span>{profileModal.church}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* SHEET BACKDROP */}
       {sheet !== 'none' && (
         <div
           style={{
-            position: 'absolute', inset: 0,
-            background: 'rgba(0,0,0,0.28)', zIndex: 90,
-            backdropFilter: 'blur(3px)',
+            position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.28)',
+            zIndex: 90, backdropFilter: 'blur(3px)',
           }}
           className="fade-in"
           onClick={closeSheet}
         />
       )}
 
-      {/* ─── BOTTOM SHEET ────────────────────────────────────────────────── */}
+      {/* BOTTOM SHEET */}
       {sheet !== 'none' && (
         <div
           className="sheet-up"
           style={{
             position: 'absolute', bottom: 0, left: 0, right: 0,
             background: 'var(--surface)', borderRadius: '24px 24px 0 0',
-            zIndex: 91, boxShadow: '0 -4px 30px rgba(0,0,0,0.12)',
-            padding: 0,
+            zIndex: 91, boxShadow: '0 -4px 30px rgba(0,0,0,0.12)', padding: 0,
           }}
           onClick={e => e.stopPropagation()}
         >
-          {/* Handle */}
           <div style={{ padding: '14px 0 0', display: 'flex', justifyContent: 'center' }}>
             <div style={{ width: 36, height: 4, background: 'var(--bg3)', borderRadius: 2 }} />
           </div>
 
-          {/* ── PICK: type selection ── */}
+          {/* PICK type selection */}
           {sheet === 'pick' && (
             <div>
               <div style={{ padding: '20px 24px 8px' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: 6 }}>
-                  Criar
-                </div>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, color: 'var(--text3)',
+                  letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: 6,
+                }}>Criar</div>
                 <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
                   O que deseja<br />compartilhar?
                 </div>
               </div>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '12px 16px 24px' }}>
                 {[
                   {
-                    type: 'comment' as SheetType,
-                    icon: '💬', title: 'Comentário no feed',
-                    desc: 'Compartilhe um pensamento com todos',
-                    gradient: 'rgba(255,143,68,.15),rgba(250,20,98,.12)',
-                    disabled: false,
+                    type: 'comment' as SheetType, icon: '\uD83D\uDCAC',
+                    title: 'Comentario no feed', desc: 'Compartilhe um pensamento com todos',
+                    gradient: 'rgba(255,143,68,.15),rgba(250,20,98,.12)', disabled: false,
                   },
                   {
-                    type: 'live-question' as SheetType,
-                    icon: '❓', title: 'Pergunta ao palestrante',
-                    desc: 'Envie uma dúvida para a sessão ao vivo',
+                    type: 'live-question' as SheetType, icon: '\u2753',
+                    title: 'Pergunta ao palestrante', desc: 'Envie uma duvida para a sessao ao vivo',
                     gradient: 'rgba(53,18,106,.12),rgba(77,193,231,.1)',
-                    disabled: !liveSession,
+                    disabled: !liveSession || !liveAllowsQA,
                   },
                   {
-                    type: 'prayer' as SheetType,
-                    icon: '🙏', title: 'Pedido de oração',
-                    desc: 'Peça apoio da comunidade em oração',
-                    gradient: 'rgba(250,20,98,.1),rgba(53,18,106,.08)',
-                    disabled: false,
+                    type: 'prayer' as SheetType, icon: '\uD83D\uDE4F',
+                    title: 'Pedido de oracao', desc: 'Peca apoio da comunidade em oracao',
+                    gradient: 'rgba(250,20,98,.1),rgba(53,18,106,.08)', disabled: false,
                   },
                 ].map((opt, idx, arr) => (
                   <div key={opt.type}>
@@ -637,9 +649,7 @@ export function HomeScreen() {
                         background: `linear-gradient(135deg,${opt.gradient})`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         flexShrink: 0, fontSize: 22,
-                      }}>
-                        {opt.icon}
-                      </div>
+                      }}>{opt.icon}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{opt.title}</div>
                         <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{opt.desc}</div>
@@ -654,109 +664,21 @@ export function HomeScreen() {
             </div>
           )}
 
-          {/* ── COMMENT ── */}
+          {/* COMMENT */}
           {sheet === 'comment' && (
             <div style={{ padding: '20px 20px 32px' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>💬 Comentário</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>\uD83D\uDCAC Comentario</div>
               <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>Compartilhe seus pensamentos com todos</div>
               <textarea
-                placeholder="O que você está pensando?"
+                placeholder="O que voce esta pensando?"
                 value={postContent}
                 onChange={e => setPostContent(e.target.value)}
                 rows={4}
                 autoFocus
                 style={{
                   width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)',
-                  borderRadius: 12, padding: '13px 15px', color: 'var(--text)',
-                  fontSize: 14, outline: 'none', resize: 'none', marginBottom: 12,
-                  fontFamily: 'var(--font-body)',
-                }}
-                onFocus={e => e.target.style.borderColor = 'var(--pink)'}
-                onBlur={e => e.target.style.borderColor = 'var(--border)'}
-              />
-              <button
-                onClick={handleSubmitPost}
-                disabled={!postContent.trim()}
-                style={{
-                  width: '100%', padding: 14,
-                  background: postContent.trim() ? 'var(--grad-warm)' : 'var(--bg3)',
-                  border: 'none', borderRadius: 12,
-                  color: postContent.trim() ? '#fff' : 'var(--text3)',
-                  fontSize: 14, fontWeight: 700, cursor: postContent.trim() ? 'pointer' : 'not-allowed',
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
-                Publicar 💬
-              </button>
-            </div>
-          )}
-
-          {/* ── LIVE QUESTION ── */}
-          {sheet === 'live-question' && (
-            <div style={{ padding: '20px 20px 32px' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>🎤 Pergunta Ao Vivo</div>
-              <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>
-                {liveSession ? `Para: ${liveSession.title}` : 'Nenhuma sessão ao vivo no momento'}
-              </div>
-              {questionSent ? (
-                <div style={{ textAlign: 'center', padding: '28px 0' }}>
-                  <div style={{ fontSize: 40, marginBottom: 8 }}>✅</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Pergunta enviada!</div>
-                  <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>O palestrante pode respondê-la ao vivo</div>
-                </div>
-              ) : (
-                <>
-                  <textarea
-                    placeholder="Digite sua pergunta..."
-                    value={postContent}
-                    onChange={e => setPostContent(e.target.value)}
-                    rows={4}
-                    autoFocus
-                    style={{
-                      width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)',
-                      borderRadius: 12, padding: '13px 15px', color: 'var(--text)',
-                      fontSize: 14, outline: 'none', resize: 'none', marginBottom: 12,
-                      fontFamily: 'var(--font-body)',
-                    }}
-                    onFocus={e => e.target.style.borderColor = 'var(--pink)'}
-                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
-                  />
-                  <button
-                    onClick={handleSubmitQuestion}
-                    disabled={!postContent.trim() || !liveSession}
-                    style={{
-                      width: '100%', padding: 14,
-                      background: postContent.trim() && liveSession ? 'var(--grad-warm)' : 'var(--bg3)',
-                      border: 'none', borderRadius: 12,
-                      color: postContent.trim() && liveSession ? '#fff' : 'var(--text3)',
-                      fontSize: 14, fontWeight: 700,
-                      cursor: postContent.trim() && liveSession ? 'pointer' : 'not-allowed',
-                      fontFamily: 'var(--font-body)',
-                    }}
-                  >
-                    Enviar pergunta 🎤
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* ── PRAYER ── */}
-          {sheet === 'prayer' && (
-            <div style={{ padding: '20px 20px 32px' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>🙏 Pedido de Oração</div>
-              <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>Compartilhe e receba apoio da comunidade</div>
-              <textarea
-                placeholder="Compartilhe seu pedido de oração..."
-                value={postContent}
-                onChange={e => setPostContent(e.target.value)}
-                rows={4}
-                autoFocus
-                style={{
-                  width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)',
-                  borderRadius: 12, padding: '13px 15px', color: 'var(--text)',
-                  fontSize: 14, outline: 'none', resize: 'none', marginBottom: 12,
-                  fontFamily: 'var(--font-body)',
+                  borderRadius: 12, padding: '13px 15px', color: 'var(--text)', fontSize: 14,
+                  outline: 'none', resize: 'none', marginBottom: 12, fontFamily: 'var(--font-body)',
                 }}
                 onFocus={e => e.target.style.borderColor = 'var(--pink)'}
                 onBlur={e => e.target.style.borderColor = 'var(--border)'}
@@ -774,7 +696,93 @@ export function HomeScreen() {
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                Enviar pedido 🙏
+                Publicar \uD83D\uDCAC
+              </button>
+            </div>
+          )}
+
+          {/* LIVE QUESTION */}
+          {sheet === 'live-question' && (
+            <div style={{ padding: '20px 20px 32px' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>\uD83C\uDFA4 Pergunta Ao Vivo</div>
+              <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>
+                {liveSession ? `Para: ${liveSession.title}` : 'Nenhuma sessao ao vivo no momento'}
+              </div>
+              {questionSent ? (
+                <div style={{ textAlign: 'center', padding: '28px 0' }}>
+                  <div style={{ fontSize: 40, marginBottom: 8 }}>\u2705</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Pergunta enviada!</div>
+                  <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>O palestrante pode respondela ao vivo</div>
+                </div>
+              ) : (
+                <>
+                  <textarea
+                    placeholder="Digite sua pergunta..."
+                    value={postContent}
+                    onChange={e => setPostContent(e.target.value)}
+                    rows={4}
+                    autoFocus
+                    style={{
+                      width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)',
+                      borderRadius: 12, padding: '13px 15px', color: 'var(--text)', fontSize: 14,
+                      outline: 'none', resize: 'none', marginBottom: 12, fontFamily: 'var(--font-body)',
+                    }}
+                    onFocus={e => e.target.style.borderColor = 'var(--pink)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                  <button
+                    onClick={handleSubmitQuestion}
+                    disabled={!postContent.trim() || !liveSession}
+                    style={{
+                      width: '100%', padding: 14,
+                      background: postContent.trim() && liveSession ? 'var(--grad-warm)' : 'var(--bg3)',
+                      border: 'none', borderRadius: 12,
+                      color: postContent.trim() && liveSession ? '#fff' : 'var(--text3)',
+                      fontSize: 14, fontWeight: 700,
+                      cursor: postContent.trim() && liveSession ? 'pointer' : 'not-allowed',
+                      fontFamily: 'var(--font-body)',
+                    }}
+                  >
+                    Enviar pergunta \uD83C\uDFA4
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* PRAYER */}
+          {sheet === 'prayer' && (
+            <div style={{ padding: '20px 20px 32px' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>\uD83D\uDE4F Pedido de Oracao</div>
+              <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>Compartilhe e receba apoio da comunidade</div>
+              <textarea
+                placeholder="Compartilhe seu pedido de oracao..."
+                value={postContent}
+                onChange={e => setPostContent(e.target.value)}
+                rows={4}
+                autoFocus
+                style={{
+                  width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)',
+                  borderRadius: 12, padding: '13px 15px', color: 'var(--text)', fontSize: 14,
+                  outline: 'none', resize: 'none', marginBottom: 12, fontFamily: 'var(--font-body)',
+                }}
+                onFocus={e => e.target.style.borderColor = 'var(--pink)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border)'}
+              />
+              <button
+                onClick={handleSubmitPost}
+                disabled={!postContent.trim()}
+                style={{
+                  width: '100%', padding: 14,
+                  background: postContent.trim() ? 'var(--grad-warm)' : 'var(--bg3)',
+                  border: 'none', borderRadius: 12,
+                  color: postContent.trim() ? '#fff' : 'var(--text3)',
+                  fontSize: 14, fontWeight: 700,
+                  cursor: postContent.trim() ? 'pointer' : 'not-allowed',
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                Enviar pedido \uD83D\uDE4F
               </button>
             </div>
           )}
