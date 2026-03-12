@@ -2,9 +2,20 @@ import { create } from 'zustand'
 import * as api from '../lib/api'
 
 export type Screen =
-  | 'splash' | 'login' | 'signup' | 'verify' | 'profile-setup'
-  | 'home' | 'agenda' | 'ranking' | 'store' | 'notes' | 'profile'
-  | 'note-editor' | 'profile-edit' | 'wishlist'
+  | 'splash'
+  | 'login'
+  | 'signup'
+  | 'verify'
+  | 'profile-setup'
+  | 'home'
+  | 'agenda'
+  | 'ranking'
+  | 'store'
+  | 'notes'
+  | 'profile'
+  | 'note-editor'
+  | 'profile-edit'
+  | 'wishlist'
 
 export interface User {
   id: string
@@ -21,7 +32,7 @@ export interface User {
 export interface EventConfig {
   id: string
   eventName: string
-  eventStartDate: string  // 'YYYY-MM-DD'
+  eventStartDate: string
   eventEndDate: string
   totalDays: number
   tagline: string
@@ -91,9 +102,11 @@ export interface Product {
   name: string
   price: number
   emoji: string
+  image?: string
   description: string
   venue?: string
   inWishlist: boolean
+  purchased?: boolean
 }
 
 export interface Note {
@@ -119,11 +132,9 @@ interface AppState {
   // Navigation
   currentScreen: Screen
   previousScreen: Screen | null
-
   // Auth
   authUserId: string | null
   pendingEmail: string | null
-
   // Data
   user: User
   eventConfig: EventConfig | null
@@ -139,16 +150,13 @@ interface AppState {
   xpAnimation: boolean
   xpGained: number
   addSheetOpen: boolean
-
   // Loading states
   loading: boolean
   feedLoading: boolean
   rankingLoading: boolean
-
   // Navigation
   navigateTo: (screen: Screen) => void
   goBack: () => void
-
   // Auth actions
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string) => Promise<void>
@@ -156,13 +164,11 @@ interface AppState {
   logout: () => Promise<void>
   setPendingEmail: (email: string) => void
   initAuth: () => Promise<void>
-
   // Data loading
   loadInitialData: (userId: string) => Promise<void>
   loadFeed: () => Promise<void>
   loadRanking: () => Promise<void>
   loadAchievements: () => Promise<void>
-
   // Actions
   completeMission: (id: string) => Promise<void>
   toggleLike: (postId: string) => void
@@ -170,6 +176,7 @@ interface AppState {
   addPost: (type: FeedPost['type'], content: string) => Promise<void>
   submitLiveQuestion: (sessionId: string, content: string) => Promise<void>
   toggleWishlist: (productId: string) => void
+  markPurchased: (productId: string) => void
   saveNote: (sessionId: string, content: string) => Promise<void>
   setActiveNote: (sessionId: string | null) => void
   triggerXpAnimation: () => void
@@ -203,7 +210,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   navigateTo: (screen) => set((s) => ({ currentScreen: screen, previousScreen: s.currentScreen })),
   goBack: () => set((s) => ({ currentScreen: s.previousScreen ?? 'home', previousScreen: null })),
-
   setPendingEmail: (email) => set({ pendingEmail: email }),
 
   // Auth
@@ -216,7 +222,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (profile && profile.name) {
         set({ user: profile })
         await get().loadInitialData(userId)
-        // Auto-complete profile mission for returning users with complete profiles
         if (
           profile.name?.trim() &&
           profile.age &&
@@ -241,14 +246,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       const data = await api.signIn(email, password)
       const userId = data.user?.id
       if (!userId) throw new Error('Login falhou')
-
       set({ authUserId: userId })
       const profile = await api.getProfile(userId)
-
       if (profile && profile.name) {
         set({ user: profile })
         await get().loadInitialData(userId)
-        // Auto-complete profile mission for returning users with complete profiles
         if (
           profile.name?.trim() &&
           profile.age &&
@@ -282,25 +284,19 @@ export const useAppStore = create<AppState>((set, get) => ({
   verifyEmail: async (code) => {
     const { pendingEmail } = get()
     if (!pendingEmail) throw new Error('E-mail nao encontrado. Tente fazer o cadastro novamente.')
-
     set({ loading: true })
     try {
       const data = await api.verifyOtp(pendingEmail, code)
       const userId = data.user?.id
       if (!userId) throw new Error('Verificacao falhou. Tente novamente.')
-
       set({ authUserId: userId, loading: false })
-
       const profile = await api.getProfile(userId)
       if (profile && profile.name) {
         set({ user: profile })
         await get().loadInitialData(userId)
         set({ currentScreen: 'home' })
       } else {
-        set({
-          user: { ...EMPTY_USER, id: userId, email: pendingEmail },
-          currentScreen: 'profile-setup',
-        })
+        set({ user: { ...EMPTY_USER, id: userId, email: pendingEmail }, currentScreen: 'profile-setup' })
       }
     } catch (err) {
       set({ loading: false })
@@ -339,20 +335,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         api.getLiveSession(),
         api.getAchievements(userId),
       ])
-
     const notes = await api.getNotes(userId, sessions)
-
-    set({
-      eventConfig,
-      sessions,
-      missions,
-      feed,
-      ranking,
-      products,
-      notes,
-      liveSession,
-      achievements,
-    })
+    set({ eventConfig, sessions, missions, feed, ranking, products, notes, liveSession, achievements })
   },
 
   loadFeed: async () => {
@@ -381,15 +365,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { authUserId, missions } = get()
     const mission = missions.find(m => m.id === id)
     if (!mission || mission.completed || !authUserId) return
-
-    // Optimistic update
     set((s) => ({
       missions: s.missions.map(m => m.id === id ? { ...m, completed: true } : m),
       user: { ...s.user, xp: s.user.xp + mission.xpReward },
       xpAnimation: true,
       xpGained: mission.xpReward,
     }))
-
     try {
       await api.completeMission(authUserId, id, mission.xpReward)
       if (mission.key === 'checkin') {
@@ -421,11 +402,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!authUserId) return
     const post = feed.find(p => p.id === postId)
     if (!post) return
-
     set((s) => ({
-      feed: s.feed.map(p => p.id === postId
-        ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
-        : p
+      feed: s.feed.map(p =>
+        p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p
       )
     }))
     if (!post.liked) {
@@ -433,9 +412,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
     api.toggleLike(authUserId, postId, post.liked).catch(() => {
       set((s) => ({
-        feed: s.feed.map(p => p.id === postId
-          ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
-          : p
+        feed: s.feed.map(p =>
+          p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p
         )
       }))
     })
@@ -448,7 +426,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!post) return
     const existingReaction = post.reactions.find(r => r.emoji === emoji)
     const currentlyReacted = existingReaction?.reacted ?? false
-
     set((s) => ({
       feed: s.feed.map(p => {
         if (p.id !== postId) return p
@@ -472,7 +449,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   addPost: async (type, content) => {
     const { authUserId, user } = get()
     if (!authUserId) return
-
     const tempId = `temp-${Date.now()}`
     const tempPost: FeedPost = {
       id: tempId,
@@ -487,14 +463,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       likes: 0,
       liked: false,
     }
-
     set((s) => ({ feed: [tempPost, ...s.feed] }))
-
     try {
       const real = await api.addPost(authUserId, type, content)
-      set((s) => ({
-        feed: s.feed.map(p => p.id === tempId ? { ...tempPost, id: real.id } : p)
-      }))
+      set((s) => ({ feed: s.feed.map(p => p.id === tempId ? { ...tempPost, id: real.id } : p) }))
       if (type === 'comment') {
         get().completeMissionByKey('comment')
       }
@@ -509,13 +481,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!authUserId) return
     const product = products.find(p => p.id === productId)
     if (!product) return
-
     const wasInWishlist = product.inWishlist
-
     set((s) => ({
       products: s.products.map(p => p.id === productId ? { ...p, inWishlist: !p.inWishlist } : p)
     }))
-
     if (!wasInWishlist) {
       const newCount = products.filter(p => p.inWishlist).length + 1
       if (newCount >= 2) {
@@ -525,7 +494,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         api.checkAchievement('wishlist_cheia').then(() => get().loadAchievements()).catch(() => {})
       }
     }
-
     api.toggleWishlist(authUserId, productId, wasInWishlist).catch(() => {
       set((s) => ({
         products: s.products.map(p => p.id === productId ? { ...p, inWishlist: !p.inWishlist } : p)
@@ -533,13 +501,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
   },
 
+  markPurchased: (productId) => {
+    set((s) => ({
+      products: s.products.map(p =>
+        p.id === productId ? { ...p, purchased: !p.purchased } : p
+      )
+    }))
+  },
+
   saveNote: async (sessionId, content) => {
     const { authUserId, sessions } = get()
     if (!authUserId) return
-
     const session = sessions.find(s => s.id === sessionId)
     const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-
     set((s) => {
       const existing = s.notes.find(n => n.sessionId === sessionId)
       if (existing) {
@@ -554,7 +528,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         }]
       }
     })
-
     await api.saveNote(authUserId, sessionId, content)
     const filledNotes = get().notes.filter(n => n.content.trim().length > 0)
     if (filledNotes.length >= 3) {
@@ -567,9 +540,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateProfile: async (data) => {
     const { authUserId } = get()
     if (!authUserId) return
-
     set((s) => ({ user: { ...s.user, ...data } }))
-
     try {
       await api.upsertProfile(authUserId, { ...get().user, ...data })
     } catch (err) {
