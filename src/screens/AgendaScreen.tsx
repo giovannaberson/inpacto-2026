@@ -6,12 +6,18 @@ const TYPE_CONFIG = {
   plenaria: { label: 'Plenária', color: 'rgba(53,18,106,0.08)', textColor: '#35126A' },
   louvor:   { label: 'Louvor',   color: 'rgba(250,20,98,0.08)', textColor: 'var(--pink)' },
   oficina:  { label: 'Oficina',  color: 'rgba(77,193,231,0.1)', textColor: '#1A7EA0'  },
+  talkshow: { label: 'Talkshow', color: 'rgba(130,80,200,0.1)', textColor: '#6B40B0' },
+  break:    { label: 'Break',    color: 'rgba(80,160,80,0.1)',  textColor: '#2E7D32' },
+  especial: { label: 'Especial', color: 'rgba(255,140,0,0.1)',  textColor: '#E65100' },
 }
 
 const TYPE_ICON = {
   plenaria: '🎙️',
   louvor:   '🎵',
   oficina:  '🛠️',
+  talkshow: '💬',
+  break:    '☕',
+  especial: '⭐',
 }
 
 export function AgendaScreen() {
@@ -24,8 +30,8 @@ export function AgendaScreen() {
   const day2 = sessions.filter(s => s.day === 2)
 
   const DAY_DATES = [
-    { day: 1, date: '18', month: 'JUL', weekday: 'Sexta-feira', sessions: day1, open: day1Open, setOpen: setDay1Open },
-    { day: 2, date: '19', month: 'JUL', weekday: 'Sábado', sessions: day2, open: day2Open, setOpen: setDay2Open },
+    { day: 1, date: '01', month: 'MAI', weekday: 'Sexta-feira', sessions: day1, open: day1Open, setOpen: setDay1Open },
+    { day: 2, date: '02', month: 'MAI', weekday: 'Sábado', sessions: day2, open: day2Open, setOpen: setDay2Open },
   ]
 
   return (
@@ -39,7 +45,7 @@ export function AgendaScreen() {
         <div style={{ position: 'absolute', top: -60, right: -60, width: 180, height: 180, background: 'rgba(255,255,255,0.06)', borderRadius: '50%' }} />
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, color: '#fff' }}>Agenda 📅</div>
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4, fontWeight: 500 }}>
-          Saturados 2026 · 18–19 de Julho
+          Saturados 2026 · 01–02 de Maio
         </div>
       </div>
 
@@ -81,7 +87,7 @@ export function AgendaScreen() {
             {open && (
               <div style={{ background: 'var(--bg2)' }}>
                 {daySessions.map((session, idx) => {
-                  const cfg = TYPE_CONFIG[session.type]
+                  const cfg = TYPE_CONFIG[session.type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.plenaria
                   return (
                     <div
                       key={session.id}
@@ -107,7 +113,7 @@ export function AgendaScreen() {
                       {/* Content */}
                       <div style={{ flex: 1, paddingBottom: 4 }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 2 }}>
-                          <span style={{ fontSize: 14 }}>{TYPE_ICON[session.type]}</span>
+                          <span style={{ fontSize: 14 }}>{TYPE_ICON[session.type as keyof typeof TYPE_ICON] || '📌'}</span>
                           <div>
                             <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{session.title}</div>
                             <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 1 }}>{session.speaker}</div>
@@ -159,7 +165,7 @@ export function AgendaScreen() {
                 width: 44, height: 44, borderRadius: 12, background: 'var(--grad-warm)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
               }}>
-                {TYPE_ICON[selectedSession.type]}
+                {TYPE_ICON[selectedSession.type as keyof typeof TYPE_ICON] || '📌'}
               </div>
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>
@@ -177,12 +183,12 @@ export function AgendaScreen() {
                 🕐 {selectedSession.startTime}–{selectedSession.endTime}
               </div>
               <div style={{
-                background: TYPE_CONFIG[selectedSession.type].color,
-                color: TYPE_CONFIG[selectedSession.type].textColor,
+                background: (TYPE_CONFIG[selectedSession.type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.plenaria).color,
+                color: (TYPE_CONFIG[selectedSession.type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.plenaria).textColor,
                 borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 700,
                 textTransform: 'uppercase', letterSpacing: '0.5px',
               }}>
-                {TYPE_CONFIG[selectedSession.type].label}
+                {(TYPE_CONFIG[selectedSession.type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.plenaria).label}
               </div>
             </div>
 
@@ -213,7 +219,7 @@ export function AgendaScreen() {
                   borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#fff',
                 }}
               >
-                🎤 Enviar pergunta
+                🎯 Enviar pergunta
               </button>
             </div>
           </div>
