@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 type FeedTab = 'comments' | 'prayer' | 'announcements'
 type SheetType = 'none' | 'pick' | 'comment' | 'live-question' | 'prayer'
@@ -17,6 +17,7 @@ export function HomeScreen() {
     missions, feed, eventConfig, liveSession,
     toggleLike, addReaction, addPost, submitLiveQuestion,
     addSheetOpen, setAddSheetOpen,
+    completeMissionByKey,
   } = useAppStore()
 
   const [feedTab, setFeedTab] = useState<FeedTab>('comments')
@@ -33,6 +34,12 @@ export function HomeScreen() {
       setAddSheetOpen(false)
     }
   }, [addSheetOpen, setAddSheetOpen])
+
+  // Trigger checkin mission when user opens the home screen
+  useEffect(() => {
+    completeMissionByKey('checkin')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Calculate current event day from eventConfig
   const currentEventDay = useMemo(() => {
