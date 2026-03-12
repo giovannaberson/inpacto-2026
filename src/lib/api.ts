@@ -3,7 +3,7 @@ import type {
   Achievement, EventConfig, FeedPost, Mission, Note, Product, RankingUser, Session, User,
 } from '../store/appStore'
 
-// âââ AUTH ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── AUTH ────────────────────────────────────────────────────────────────────
 
 export async function signIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -46,7 +46,7 @@ export async function verifyOtp(email: string, token: string) {
   return data
 }
 
-// âââ EVENT CONFIG âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── EVENT CONFIG ─────────────────────────────────────────────────────────────
 
 export async function getEventConfig(): Promise<EventConfig | null> {
   const { data, error } = await supabase
@@ -63,13 +63,13 @@ export async function getEventConfig(): Promise<EventConfig | null> {
     eventStartDate: data.event_start_date,
     eventEndDate: data.event_end_date,
     totalDays: data.total_days,
-    tagline: data.tagline ?? 'Saturados do EspÃ­rito',
+    tagline: data.tagline ?? 'Saturados do Espírito',
     primaryColor: data.primary_color ?? '#FA1462',
     logoUrl: data.logo_url ?? undefined,
   }
 }
 
-// âââ PROFILES ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── PROFILES ────────────────────────────────────────────────────────────────
 
 export async function getProfile(userId: string): Promise<User | null> {
   const { data, error } = await supabase
@@ -89,7 +89,7 @@ export async function getProfile(userId: string): Promise<User | null> {
     city: data.city ?? '',
     bio: data.bio ?? '',
     xp: data.xp ?? 0,
-    age: data.age ?? 17,
+    age: data.age ?? undefined,
   }
 }
 
@@ -109,7 +109,7 @@ export async function upsertProfile(userId: string, updates: Partial<User>) {
   if (error) throw error
 }
 
-// RPC: increment_xp uses auth.uid() internally â no userId needed
+// RPC: increment_xp uses auth.uid() internally — no userId needed
 export async function addXp(amount: number) {
   const { error } = await supabase.rpc('increment_xp', { amount })
   if (error) {
@@ -122,7 +122,7 @@ export async function addXp(amount: number) {
   }
 }
 
-// âââ SESSIONS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── SESSIONS ─────────────────────────────────────────────────────────────────
 
 export async function getSessions(): Promise<Session[]> {
   const { data, error } = await supabase
@@ -146,7 +146,7 @@ export async function getSessions(): Promise<Session[]> {
   }))
 }
 
-// RPC: get_current_session â returns the session with is_live = true
+// RPC: get_current_session — returns the session with is_live = true
 export async function getLiveSession(): Promise<Session | null> {
   const { data, error } = await supabase.rpc('get_current_session')
   if (error || !data || data.length === 0) return null
@@ -164,7 +164,7 @@ export async function getLiveSession(): Promise<Session | null> {
   }
 }
 
-// âââ MISSIONS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── MISSIONS ─────────────────────────────────────────────────────────────────
 
 export async function getMissionsWithStatus(userId: string): Promise<Mission[]> {
   const [missionsRes, completedRes] = await Promise.all([
@@ -194,11 +194,11 @@ export async function completeMission(userId: string, missionId: string, xpRewar
 
   if (error) throw error
 
-  // RPC uses auth.uid() â no need to pass userId
+  // RPC uses auth.uid() — no need to pass userId
   await addXp(xpReward)
 }
 
-// âââ ACHIEVEMENTS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── ACHIEVEMENTS ─────────────────────────────────────────────────────────────
 
 export async function getAchievements(userId: string): Promise<Achievement[]> {
   const [achievementsRes, unlockedRes] = await Promise.all([
@@ -229,7 +229,7 @@ export async function checkAchievement(key: string): Promise<boolean> {
   return data === true
 }
 
-// âââ LIVE QUESTIONS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── LIVE QUESTIONS ───────────────────────────────────────────────────────────
 
 export async function submitLiveQuestion(userId: string, sessionId: string, content: string) {
   const { error } = await supabase
@@ -238,7 +238,7 @@ export async function submitLiveQuestion(userId: string, sessionId: string, cont
   if (error) throw error
 }
 
-// âââ FEED ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── FEED ──────────────────────────────────────────────────────────────────────
 
 export async function getFeed(userId: string): Promise<FeedPost[]> {
   const { data: posts, error } = await supabase
@@ -267,11 +267,11 @@ export async function getFeed(userId: string): Promise<FeedPost[]> {
     }
 
     const name = post.user_id === '00000000-0000-0000-0000-000000000000'
-      ? 'ð¢ OrganizaÃ§Ã£o'
-      : (profile?.name ?? 'UsuÃ¡rio')
+      ? '📢 Organização'
+      : (profile?.name ?? 'Usuário')
 
-    const initials = name === 'ð¢ OrganizaÃ§Ã£o'
-      ? 'ð¢'
+    const initials = name === '📢 Organização'
+      ? '📢'
       : name.split(' ').slice(0, 2).map((w: string) => w[0]).join('')
 
     const now = new Date()
@@ -279,9 +279,9 @@ export async function getFeed(userId: string): Promise<FeedPost[]> {
     const diffMs = now.getTime() - created.getTime()
     const diffMin = Math.floor(diffMs / 60000)
     const timeLabel = diffMin < 1 ? 'agora'
-      : diffMin < 60 ? `${diffMin}min atrÃ¡s`
-      : diffMin < 1440 ? `${Math.floor(diffMin / 60)}h atrÃ¡s`
-      : `${Math.floor(diffMin / 1440)}d atrÃ¡s`
+      : diffMin < 60 ? `${diffMin}min atrás`
+      : diffMin < 1440 ? `${Math.floor(diffMin / 60)}h atrás`
+      : `${Math.floor(diffMin / 1440)}d atrás`
 
     return {
       id: post.id,
@@ -326,7 +326,7 @@ export async function toggleReaction(userId: string, postId: string, emoji: stri
   }
 }
 
-// âââ RANKING ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── RANKING ──────────────────────────────────────────────────────────────────
 
 export async function getRanking(): Promise<RankingUser[]> {
   const { data, error } = await supabase
@@ -339,7 +339,7 @@ export async function getRanking(): Promise<RankingUser[]> {
 
   return data.map(r => ({
     id: r.id,
-    name: r.name ?? 'UsuÃ¡rio',
+    name: r.name ?? 'Usuário',
     initials: (r.name ?? 'U').split(' ').slice(0, 2).map((w: string) => w[0]).join(''),
     church: r.church ?? '',
     xp: r.xp ?? 0,
@@ -347,7 +347,7 @@ export async function getRanking(): Promise<RankingUser[]> {
   }))
 }
 
-// âââ PRODUCTS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── PRODUCTS ─────────────────────────────────────────────────────────────────
 
 export async function getProducts(userId: string): Promise<Product[]> {
   const [productsRes, wishlistRes] = await Promise.all([
@@ -379,7 +379,7 @@ export async function toggleWishlist(userId: string, productId: string, currentl
   }
 }
 
-// âââ NOTES ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── NOTES ────────────────────────────────────────────────────────────────────
 
 export async function getNotes(userId: string, sessionsData: Session[]): Promise<Note[]> {
   const { data, error } = await supabase
@@ -396,7 +396,7 @@ export async function getNotes(userId: string, sessionsData: Session[]): Promise
     const timeStr = updated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     return {
       sessionId: n.session_id,
-      sessionTitle: session?.title ?? 'SessÃ£o',
+      sessionTitle: session?.title ?? 'Sessão',
       content: n.content ?? '',
       updatedAt: timeStr,
     }
