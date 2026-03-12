@@ -16,7 +16,7 @@ export function Topbar() {
         <img
           src="/logo-inpacto.svg"
           alt="InPacto"
-          style={{ display: 'block', height: 22, width: 'auto' }}
+          style={{ height: 40, width: "auto", display: "block" }}
         />
       </div>
 
@@ -27,7 +27,7 @@ export function Topbar() {
           color: 'var(--xp)', fontSize: 11, fontWeight: 700,
           padding: '5px 10px', borderRadius: 20, letterSpacing: '0.3px',
         }}>
-          ⚡ {user.xp.toLocaleString('pt-BR')} XP
+          â¡ {user.xp.toLocaleString('pt-BR')} XP
         </div>
         <button
           onClick={() => navigateTo('profile')}
