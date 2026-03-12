@@ -69,7 +69,7 @@ export interface Session {
   day: number
   title: string
   speaker: string
-  type: 'plenaria' | 'louvor' | 'oficina'
+  type: 'plenaria' | 'louvor' | 'oficina' | 'talkshow' | 'break' | 'especial'
   startTime: string
   endTime: string
   description: string
@@ -206,8 +206,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setPendingEmail: (email) => set({ pendingEmail: email }),
 
-  // âââ Auth âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-
+  // Auth
   initAuth: async () => {
     const session = await api.getSession()
     if (session?.user) {
@@ -217,6 +216,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (profile && profile.name) {
         set({ user: profile })
         await get().loadInitialData(userId)
+        // Auto-complete profile mission for returning users with complete profiles
+        if (
+          profile.name?.trim() &&
+          profile.age &&
+          profile.city?.trim() &&
+          profile.church?.trim() &&
+          profile.bio?.trim()
+        ) {
+          get().completeMissionByKey('complete_profile')
+        }
         set({ currentScreen: 'home' })
       } else {
         set({ currentScreen: 'profile-setup' })
@@ -239,6 +248,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (profile && profile.name) {
         set({ user: profile })
         await get().loadInitialData(userId)
+        // Auto-complete profile mission for returning users with complete profiles
+        if (
+          profile.name?.trim() &&
+          profile.age &&
+          profile.city?.trim() &&
+          profile.church?.trim() &&
+          profile.bio?.trim()
+        ) {
+          get().completeMissionByKey('complete_profile')
+        }
         set({ currentScreen: 'home', loading: false })
       } else {
         set({ user: { ...EMPTY_USER, id: userId, email }, currentScreen: 'profile-setup', loading: false })
@@ -262,13 +281,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   verifyEmail: async (code) => {
     const { pendingEmail } = get()
-    if (!pendingEmail) throw new Error('E-mail nÃ£o encontrado. Tente fazer o cadastro novamente.')
+    if (!pendingEmail) throw new Error('E-mail nao encontrado. Tente fazer o cadastro novamente.')
 
     set({ loading: true })
     try {
       const data = await api.verifyOtp(pendingEmail, code)
       const userId = data.user?.id
-      if (!userId) throw new Error('VerificaÃ§Ã£o falhou. Tente novamente.')
+      if (!userId) throw new Error('Verificacao falhou. Tente novamente.')
 
       set({ authUserId: userId, loading: false })
 
@@ -307,8 +326,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
   },
 
-  // âââ Data Loading ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-
+  // Data Loading
   loadInitialData: async (userId) => {
     const [eventConfig, sessions, missions, feed, ranking, products, liveSession, achievements] =
       await Promise.all([
@@ -358,8 +376,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ achievements })
   },
 
-  // âââ Actions âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-
+  // Actions
   completeMission: async (id) => {
     const { authUserId, missions } = get()
     const mission = missions.find(m => m.id === id)
@@ -375,15 +392,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     try {
       await api.completeMission(authUserId, id, mission.xpReward)
-      // Extra front-end achievement triggers for keys not covered by DB trigger
       if (mission.key === 'checkin') {
         api.checkAchievement('boas_vindas').catch(() => {})
         api.checkAchievement('madrugador').catch(() => {})
       }
-      // Reload achievements in background â DB trigger may also have unlocked some
       get().loadAchievements()
     } catch {
-      // Rollback on error
       set((s) => ({
         missions: s.missions.map(m => m.id === id ? { ...m, completed: false } : m),
         user: { ...s.user, xp: s.user.xp - mission.xpReward },
@@ -399,7 +413,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!authUserId || !content.trim()) return
     await api.submitLiveQuestion(authUserId, sessionId, content)
     get().completeMissionByKey('ask_speaker')
-    // Unlock Q&A achievement in background
     api.checkAchievement('pergunta_viva').then(() => get().loadAchievements()).catch(() => {})
   },
 
@@ -485,7 +498,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (type === 'comment') {
         get().completeMissionByKey('comment')
       }
-      // Unlock feed achievement in background
       api.checkAchievement('feed_ativo').then(() => get().loadAchievements()).catch(() => {})
     } catch {
       set((s) => ({ feed: s.feed.filter(p => p.id !== tempId) }))
@@ -504,9 +516,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       products: s.products.map(p => p.id === productId ? { ...p, inWishlist: !p.inWishlist } : p)
     }))
 
-    // Check wishlist_cheia achievement when adding (not removing) and hitting threshold
     if (!wasInWishlist) {
-      const newCount = products.filter(p => p.inWishlist).length + 1  // +1 because optimistic
+      const newCount = products.filter(p => p.inWishlist).length + 1
       if (newCount >= 2) {
         get().completeMissionByKey('wishlist_2')
       }
@@ -537,7 +548,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       return {
         notes: [...s.notes, {
           sessionId,
-          sessionTitle: session?.title ?? 'SessÃ£o',
+          sessionTitle: session?.title ?? 'Sessao',
           content,
           updatedAt: now,
         }]
@@ -565,6 +576,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       console.error('Failed to update profile', err)
     }
   },
+
   completeMissionByKey: (key: string) => {
     const { missions, eventConfig } = get()
     if (!eventConfig) return
