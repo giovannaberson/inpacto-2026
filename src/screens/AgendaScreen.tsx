@@ -4,21 +4,23 @@ import type { Session } from '../store/appStore'
 
 const TYPE_CONFIG = {
   plenaria: { label: 'Plenária', color: 'rgba(53,18,106,0.08)', textColor: '#35126A' },
-  louvor:   { label: 'Louvor',   color: 'rgba(250,20,98,0.08)', textColor: 'var(--pink)' },
-  oficina:  { label: 'Oficina',  color: 'rgba(77,193,231,0.1)', textColor: '#1A7EA0'  },
+  louvor: { label: 'Louvor', color: 'rgba(250,20,98,0.08)', textColor: 'var(--pink)' },
+  oficina: { label: 'Oficina', color: 'rgba(77,193,231,0.1)', textColor: '#1A7EA0' },
   talkshow: { label: 'Talkshow', color: 'rgba(130,80,200,0.1)', textColor: '#6B40B0' },
-  break:    { label: 'Break',    color: 'rgba(80,160,80,0.1)',  textColor: '#2E7D32' },
-  especial: { label: 'Especial', color: 'rgba(255,140,0,0.1)',  textColor: '#E65100' },
+  break: { label: 'Break', color: 'rgba(80,160,80,0.1)', textColor: '#2E7D32' },
+  especial: { label: 'Especial', color: 'rgba(255,140,0,0.1)', textColor: '#E65100' },
 }
 
 const TYPE_ICON = {
   plenaria: '🎙️',
-  louvor:   '🎵',
-  oficina:  '🛠️',
+  louvor: '🎵',
+  oficina: '🛠️',
   talkshow: '💬',
-  break:    '☕',
+  break: '☕',
   especial: '⭐',
 }
+
+const NOTES_QUESTIONS_TYPES = ['plenaria', 'oficina', 'talkshow']
 
 export function AgendaScreen() {
   const { sessions, navigateTo, setActiveNote } = useAppStore()
@@ -40,7 +42,9 @@ export function AgendaScreen() {
       <div style={{
         padding: '52px 20px 16px',
         background: 'var(--grad-hero)',
-        flexShrink: 0, position: 'relative', overflow: 'hidden',
+        flexShrink: 0,
+        position: 'relative',
+        overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', top: -60, right: -60, width: 180, height: 180, background: 'rgba(255,255,255,0.06)', borderRadius: '50%' }} />
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, color: '#fff' }}>Agenda 📅</div>
@@ -56,14 +60,16 @@ export function AgendaScreen() {
             <div
               onClick={() => setOpen(!open)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px',
-                cursor: 'pointer', background: 'var(--surface)',
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '14px 20px', cursor: 'pointer',
+                background: 'var(--surface)',
                 borderBottom: '1px solid var(--border)',
                 transition: 'background 0.15s',
               }}
             >
               <div style={{
-                width: 48, height: 48, borderRadius: 14, background: 'var(--grad-warm)',
+                width: 48, height: 48, borderRadius: 14,
+                background: 'var(--grad-warm)',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}>
@@ -74,11 +80,7 @@ export function AgendaScreen() {
                 <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>Dia {day} · {weekday}</div>
                 <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{daySessions.length} atividades</div>
               </div>
-              <div style={{
-                transition: 'transform 0.25s',
-                transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-                color: 'var(--text3)', fontSize: 16,
-              }}>
+              <div style={{ transition: 'transform 0.25s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', color: 'var(--text3)', fontSize: 16 }}>
                 ▾
               </div>
             </div>
@@ -104,12 +106,10 @@ export function AgendaScreen() {
                         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)' }}>{session.startTime}</div>
                         <div style={{ fontSize: 10, color: 'var(--text3)' }}>{session.endTime}</div>
                       </div>
-
                       {/* Line */}
                       <div style={{ width: 2, background: 'var(--bg3)', flexShrink: 0, borderRadius: 1, position: 'relative' }}>
                         <div style={{ position: 'absolute', top: 2, left: -3, width: 8, height: 8, borderRadius: '50%', background: 'var(--pink)', border: '2px solid var(--surface)' }} />
                       </div>
-
                       {/* Content */}
                       <div style={{ flex: 1, paddingBottom: 4 }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 2 }}>
@@ -120,14 +120,15 @@ export function AgendaScreen() {
                           </div>
                         </div>
                         <div style={{
-                          display: 'inline-block', background: cfg.color, color: cfg.textColor,
-                          fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
-                          marginTop: 5, textTransform: 'uppercase', letterSpacing: '0.6px',
+                          display: 'inline-block',
+                          background: cfg.color, color: cfg.textColor,
+                          fontSize: 10, fontWeight: 700,
+                          padding: '2px 8px', borderRadius: 6, marginTop: 5,
+                          textTransform: 'uppercase', letterSpacing: '0.6px',
                         }}>
                           {cfg.label}
                         </div>
                       </div>
-
                       <div style={{ color: 'var(--text3)', fontSize: 16, alignSelf: 'center' }}>›</div>
                     </div>
                   )
@@ -150,10 +151,13 @@ export function AgendaScreen() {
             className="sheet-up"
             style={{
               position: 'absolute', bottom: 0, left: 0, right: 0,
-              background: 'var(--surface)', borderRadius: '24px 24px 0 0',
-              padding: '12px 20px 40px', zIndex: 91,
+              background: 'var(--surface)',
+              borderRadius: '24px 24px 0 0',
+              padding: '12px 20px 40px',
+              zIndex: 91,
               boxShadow: '0 -4px 30px rgba(0,0,0,0.12)',
-              maxHeight: '80%', overflowY: 'auto',
+              maxHeight: '80%',
+              overflowY: 'auto',
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -162,8 +166,10 @@ export function AgendaScreen() {
             {/* Session header */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 14, alignItems: 'flex-start' }}>
               <div style={{
-                width: 44, height: 44, borderRadius: 12, background: 'var(--grad-warm)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
+                width: 44, height: 44, borderRadius: 12,
+                background: 'var(--grad-warm)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 20, flexShrink: 0,
               }}>
                 {TYPE_ICON[selectedSession.type as keyof typeof TYPE_ICON] || '📌'}
               </div>
@@ -197,31 +203,39 @@ export function AgendaScreen() {
               <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.7 }}>{selectedSession.description}</p>
             </div>
 
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => {
-                  setActiveNote(selectedSession.id)
-                  setSelectedSession(null)
-                  navigateTo('note-editor')
-                }}
-                style={{
-                  flex: 1, padding: 13, background: 'var(--bg2)', border: '1.5px solid var(--border)',
-                  borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: 'var(--text2)',
-                }}
-              >
-                📝 Anotações
-              </button>
-              <button
-                onClick={() => setSelectedSession(null)}
-                style={{
-                  flex: 1, padding: 13, background: 'var(--grad-warm)', border: 'none',
-                  borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#fff',
-                }}
-              >
-                🎯 Enviar pergunta
-              </button>
-            </div>
+            {/* Actions — only for plenaria, oficina, talkshow */}
+            {NOTES_QUESTIONS_TYPES.includes(selectedSession.type) && (
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => {
+                    setActiveNote(selectedSession.id)
+                    setSelectedSession(null)
+                    navigateTo('note-editor')
+                  }}
+                  style={{
+                    flex: 1, padding: 13,
+                    background: 'var(--bg2)',
+                    border: '1.5px solid var(--border)',
+                    borderRadius: 12, fontSize: 13, fontWeight: 700,
+                    cursor: 'pointer', color: 'var(--text2)',
+                  }}
+                >
+                  📝 Anotações
+                </button>
+                <button
+                  onClick={() => setSelectedSession(null)}
+                  style={{
+                    flex: 1, padding: 13,
+                    background: 'var(--grad-warm)',
+                    border: 'none',
+                    borderRadius: 12, fontSize: 13, fontWeight: 700,
+                    cursor: 'pointer', color: '#fff',
+                  }}
+                >
+                  🎯 Enviar pergunta
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
