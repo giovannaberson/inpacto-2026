@@ -175,6 +175,7 @@ interface AppState {
   triggerXpAnimation: () => void
   setAddSheetOpen: (open: boolean) => void
   updateProfile: (data: Partial<User>) => Promise<void>
+  completeMissionByKey: (key: string) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -397,6 +398,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { authUserId } = get()
     if (!authUserId || !content.trim()) return
     await api.submitLiveQuestion(authUserId, sessionId, content)
+    get().completeMissionByKey('ask_speaker')
     // Unlock Q&A achievement in background
     api.checkAchievement('pergunta_viva').then(() => get().loadAchievements()).catch(() => {})
   },
@@ -413,6 +415,9 @@ export const useAppStore = create<AppState>((set, get) => ({
         : p
       )
     }))
+    if (!post.liked) {
+      get().completeMissionByKey('interact_post')
+    }
     api.toggleLike(authUserId, postId, post.liked).catch(() => {
       set((s) => ({
         feed: s.feed.map(p => p.id === postId
@@ -477,6 +482,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       set((s) => ({
         feed: s.feed.map(p => p.id === tempId ? { ...tempPost, id: real.id } : p)
       }))
+      if (type === 'comment') {
+        get().completeMissionByKey('comment')
+      }
       // Unlock feed achievement in background
       api.checkAchievement('feed_ativo').then(() => get().loadAchievements()).catch(() => {})
     } catch {
@@ -499,6 +507,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     // Check wishlist_cheia achievement when adding (not removing) and hitting threshold
     if (!wasInWishlist) {
       const newCount = products.filter(p => p.inWishlist).length + 1  // +1 because optimistic
+      if (newCount >= 2) {
+        get().completeMissionByKey('wishlist_2')
+      }
       if (newCount >= 3) {
         api.checkAchievement('wishlist_cheia').then(() => get().loadAchievements()).catch(() => {})
       }
@@ -534,6 +545,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
 
     await api.saveNote(authUserId, sessionId, content)
+    const filledNotes = get().notes.filter(n => n.content.trim().length > 0)
+    if (filledNotes.length >= 3) {
+      get().completeMissionByKey('note_3')
+    }
   },
 
   setActiveNote: (sessionId) => set({ activeNoteSessionId: sessionId }),
@@ -549,5 +564,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (err) {
       console.error('Failed to update profile', err)
     }
+  },
+  completeMissionByKey: (key: string) => {
+    const { missions, eventConfig } = get()
+    if (!eventConfig) return
+    const startDate = new Date(eventConfig.eventStartDate + 'T00:00:00')
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const diff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+    const currentDay = diff < 0 ? 1 : diff >= eventConfig.totalDays ? eventConfig.totalDays : diff + 1
+    const mission = missions.find(m => m.key === key && m.day === currentDay && !m.completed)
+    if (mission) get().completeMission(mission.id)
   },
 }))
