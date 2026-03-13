@@ -23,7 +23,7 @@ const TYPE_ICON = {
 const NOTES_QUESTIONS_TYPES = ['plenaria', 'oficina', 'talkshow']
 
 export function AgendaScreen() {
-  const { sessions, navigateTo, setActiveNote } = useAppStore()
+  const { sessions, navigateTo, setActiveNote, eventConfig, setOpenLiveQuestion } = useAppStore()
   const [day1Open, setDay1Open] = useState(true)
   const [day2Open, setDay2Open] = useState(false)
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
@@ -31,10 +31,16 @@ export function AgendaScreen() {
   const day1 = sessions.filter(s => s.day === 1)
   const day2 = sessions.filter(s => s.day === 2)
 
+  const MONTHS = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ']
+  const WEEKDAYS = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado']
+  const startDate = eventConfig ? new Date(eventConfig.eventStartDate + 'T12:00:00') : null
   const DAY_DATES = [
-    { day: 1, date: '01', month: 'MAI', weekday: 'Sexta-feira', sessions: day1, open: day1Open, setOpen: setDay1Open },
-    { day: 2, date: '02', month: 'MAI', weekday: 'Sábado', sessions: day2, open: day2Open, setOpen: setDay2Open },
-  ]
+    { day: 1, sessions: day1, open: day1Open, setOpen: setDay1Open },
+    { day: 2, sessions: day2, open: day2Open, setOpen: setDay2Open },
+  ].map(({ day, sessions, open, setOpen }) => {
+    const d = startDate ? new Date(startDate.getTime() + (day - 1) * 86400000) : null
+    return { day, date: d ? String(d.getDate()).padStart(2,'0') : '??', month: d ? MONTHS[d.getMonth()] : '???', weekday: d ? WEEKDAYS[d.getDay()] : '', sessions, open, setOpen }
+  })
 
   return (
     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
@@ -49,7 +55,7 @@ export function AgendaScreen() {
         <div style={{ position: 'absolute', top: -60, right: -60, width: 180, height: 180, background: 'rgba(255,255,255,0.06)', borderRadius: '50%' }} />
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, color: '#fff' }}>Agenda 📅</div>
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4, fontWeight: 500 }}>
-          Saturados 2026 · 01–02 de Maio
+          {startDate ? `Saturados 2026 · ${String(startDate.getDate()).padStart(2,'0')}\u2013${String(startDate.getDate()+1).padStart(2,'0')} de ${startDate.toLocaleDateString('pt-BR',{month:'long'})}` : 'Saturados 2026'}
         </div>
       </div>
 
@@ -115,7 +121,10 @@ export function AgendaScreen() {
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 2 }}>
                           <span style={{ fontSize: 14 }}>{TYPE_ICON[session.type as keyof typeof TYPE_ICON] || '📌'}</span>
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{session.title}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                              <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{session.title}</span>
+                              {session.isLive && <span style={{ fontSize: 10, fontWeight: 800, background: '#e00', color: '#fff', borderRadius: 4, padding: '2px 6px' }}>🔴 AO VIVO</span>}
+                            </div>
                             <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 1 }}>{session.speaker}</div>
                           </div>
                         </div>
@@ -223,7 +232,7 @@ export function AgendaScreen() {
                   📝 Anotações
                 </button>
                 <button
-                  onClick={() => setSelectedSession(null)}
+                  onClick={() => { setOpenLiveQuestion(true); setSelectedSession(null); navigateTo('home') }}
                   style={{
                     flex: 1, padding: 13,
                     background: 'var(--grad-warm)',
