@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 import * as api from '../lib/api'
+import { supabase } from '../lib/supabase'
+
+let _feedChannel: ReturnType<typeof supabase.channel> | null = null
 
 export type Screen =
   | 'splash'
@@ -312,6 +315,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   logout: async () => {
+    if (_feedChannel) { supabase.removeChannel(_feedChannel); _feedChannel = null }
     await api.signOut()
     set({
       authUserId: null,
@@ -346,6 +350,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       ])
     const notes = await api.getNotes(userId, sessions)
     set({ eventConfig, sessions, missions, feed, ranking, products, notes, liveSession, achievements })
+    // Realtime: subscribe to new feed_posts
+    if (_feedChannel) { supabase.removeChannel(_feedChannel); _feedChannel = null }
+    _feedChannel = supabase
+      .channel('feed-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feed_posts' }, () => {
+        get().loadFeed()
+      })
+      .subscribe()
   },
 
   loadFeed: async () => {
