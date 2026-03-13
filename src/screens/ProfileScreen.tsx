@@ -10,6 +10,7 @@ export function ProfileScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [localAvatar, setLocalAvatar] = useState(user.avatar || '')
   const [uploading, setUploading] = useState(false)
+  const [selectedAchievement, setSelectedAchievement] = useState<any>(null)
 
   const initials = user.name
     ? user.name.split(' ').slice(0, 2).map((w: string) => w[0]).join('')
@@ -42,6 +43,7 @@ export function ProfileScreen() {
       const url = await uploadAvatar(user.id, file)
       await upsertProfile(user.id, { avatar: url })
       setLocalAvatar(url)
+      useAppStore.getState().setUserAvatar(url)
     } catch (err) {
       console.error(err)
     } finally {
@@ -201,11 +203,13 @@ export function ProfileScreen() {
               {achievements.map((a: any) => (
                 <div
                   key={a.id}
-                  title={a.title + ': ' + a.desc}
+                  title={a.title + ': ' + a.description}
+                  onClick={() => a.unlocked && setSelectedAchievement(a)}
                   style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                     opacity: a.unlocked ? 1 : 0.35,
                     filter: a.unlocked ? 'none' : 'grayscale(1)',
+                    cursor: a.unlocked ? 'pointer' : 'default',
                   }}
                 >
                   <div style={{
@@ -237,6 +241,31 @@ export function ProfileScreen() {
           </button>
         </div>
       </div>
+      {selectedAchievement && (
+        <>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 95, backdropFilter: 'blur(3px)' }}
+               onClick={() => setSelectedAchievement(null)} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--surface)',
+            borderRadius: '24px 24px 0 0', zIndex: 96, padding: '0 24px 48px' }}
+               onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0' }}>
+              <div style={{ width: 36, height: 4, background: 'var(--bg3)', borderRadius: 2 }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, paddingTop: 8 }}>
+              <div style={{ width: 72, height: 72, borderRadius: 18, background: 'rgba(250,20,98,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36,
+                border: '2px solid rgba(250,20,98,0.2)' }}>{selectedAchievement.icon}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', textAlign: 'center' }}>{selectedAchievement.title}</div>
+              <div style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', lineHeight: 1.5 }}>{selectedAchievement.description}</div>
+              {selectedAchievement.unlockedAt && (
+                <div style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 600 }}>
+                  Desbloqueado em {new Date(selectedAchievement.unlockedAt).toLocaleDateString('pt-BR')}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
