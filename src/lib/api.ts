@@ -148,20 +148,29 @@ export async function getSessions(): Promise<Session[]> {
   }))
 }
 
-// RPC: get_current_session — returns the session with is_live = true
+// Auto-detect live session based on current time vs start_time/end_time
 export async function getLiveSession(): Promise<Session | null> {
-  const { data, error } = await supabase.rpc('get_current_session')
+  const { data, error } = await supabase
+    .from('sessions').select('*').order('day').order('start_time')
   if (error || !data || data.length === 0) return null
-  const s = data[0]
+  const now = new Date()
+  const currentTime =
+    now.getHours().toString().padStart(2, '0') + ':' +
+    now.getMinutes().toString().padStart(2, '0')
+  const live = data.find(
+    s => s.start_time && s.end_time &&
+      s.start_time <= currentTime && s.end_time >= currentTime
+  )
+  if (!live) return null
   return {
-    id: s.id,
-    day: s.day,
-    title: s.title,
-    speaker: s.speaker ?? '',
-    type: s.type as Session['type'],
-    startTime: s.start_time,
-    endTime: s.end_time,
-    description: s.description ?? '',
+    id: live.id,
+    day: live.day,
+    title: live.title,
+    speaker: live.speaker ?? '',
+    type: live.type as Session['type'],
+    startTime: live.start_time,
+    endTime: live.end_time,
+    description: live.description ?? '',
     isLive: true,
   }
 }
