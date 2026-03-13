@@ -17,6 +17,43 @@ import { NoteEditorScreen } from './screens/NoteEditorScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { ProfileEditScreen } from './screens/ProfileEditScreen'
 
+
+function XpToast() {
+  const { xpAnimation, xpGained } = useAppStore()
+  if (!xpAnimation) return null
+  return (
+    <div style={{
+      position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)',
+      background: 'var(--grad-warm)', color: '#fff',
+      padding: '10px 22px', borderRadius: 24,
+      fontWeight: 800, fontSize: 16, zIndex: 9999,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+      pointerEvents: 'none',
+    }}>
+      +{xpGained} XP ⚡
+    </div>
+  )
+}
+
+function GlobalToast() {
+  const { toast, hideToast } = useAppStore()
+  if (!toast) return null
+  return (
+    <div
+      onClick={hideToast}
+      style={{
+        position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
+        background: toast.type === 'error' ? '#cc0000' : '#222',
+        color: '#fff', padding: '12px 24px', borderRadius: 16,
+        fontWeight: 600, fontSize: 14, zIndex: 9999,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        maxWidth: '80vw', textAlign: 'center', cursor: 'pointer',
+      }}
+    >
+      {toast.message}
+    </div>
+  )
+}
 const authScreens = ['splash', 'login', 'signup', 'verify', 'profile-setup']
 
 function ScreenContent() {
@@ -66,6 +103,8 @@ export default function App() {
         <ScreenContent />
       </div>
 
+      <XpToast />
+      <GlobalToast />
       <Navbar />
     </div>
   )
