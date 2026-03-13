@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
+import { uploadAvatar, upsertProfile } from '../lib/api'
 
 export function ProfileEditScreen() {
   const { user, updateProfile, goBack, completeMissionByKey } = useAppStore()
@@ -9,6 +10,26 @@ export function ProfileEditScreen() {
   const [bio, setBio] = useState(user.bio)
   const [age, setAge] = useState(String(user.age || ''))
   const [saving, setSaving] = useState(false)
+  const [localAvatar, setLocalAvatar] = useState(user.avatar || '')
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0]
+    if (!file || !user.id) return
+    try {
+      setUploading(true)
+      const url = await uploadAvatar(user.id, file)
+      await upsertProfile(user.id, { avatar: url })
+      setLocalAvatar(url)
+      useAppStore.getState().setUserAvatar(url)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setUploading(false)
+    }
+  }
+
 
   const handleSave = async () => {
     setSaving(true)
@@ -48,15 +69,36 @@ export function ProfileEditScreen() {
       <div className="scroll-area" style={{ padding: '24px 24px 0' }}>
         {/* Avatar */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-          <div style={{
-            width: 82, height: 82, borderRadius: '50%',
-            background: 'var(--grad-warm)',
-            border: '3px solid white',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 28, fontWeight: 700, color: '#fff',
-            boxShadow: 'var(--shadow)',
-          }}>
-            {name.split(' ').slice(0,2).map(w => w[0]).join('')}
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+          <div style={{ position: 'relative' }}>
+            <div style={{
+              width: 82, height: 82, borderRadius: '50%',
+              background: 'var(--grad-warm)',
+              border: '3px solid white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 28, fontWeight: 700, color: '#fff',
+              boxShadow: 'var(--shadow)',
+              overflow: 'hidden',
+            }}>
+              {localAvatar
+                ? <img src={localAvatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : name.split(' ').slice(0,2).map((w: string) => w[0]).join('')
+              }
+            </div>
+            <button
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+              disabled={uploading}
+              style={{
+                position: 'absolute', bottom: 0, right: 0,
+                width: 26, height: 26, borderRadius: '50%',
+                background: uploading ? '#999' : 'var(--pink)',
+                border: '2px solid #fff', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, padding: 0,
+              }}
+            >
+              {uploading ? '⏳' : '📷'}
+            </button>
           </div>
         </div>
 
