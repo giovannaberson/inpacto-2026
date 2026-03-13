@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
 
 export function NoteEditorScreen() {
@@ -7,6 +7,7 @@ export function NoteEditorScreen() {
   const existingNote = notes.find(n => n.sessionId === activeNoteSessionId)
   const [content, setContent] = useState(existingNote?.content ?? '')
   const [saved, setSaved] = useState<null | boolean>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout>>()
 
   const handleBack = () => {
     saveNote(activeNoteSessionId!, content)
@@ -16,11 +17,11 @@ export function NoteEditorScreen() {
   const handleChange = (val: string) => {
     setContent(val)
     setSaved(false)
-    const t = setTimeout(() => {
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
       saveNote(activeNoteSessionId!, val)
       setSaved(true)
     }, 1200)
-    return () => clearTimeout(t)
   }
 
   if (!session) return null
