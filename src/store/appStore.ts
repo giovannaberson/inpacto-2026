@@ -72,10 +72,13 @@ export interface FeedPost {
   userXp: number
   type: 'comment' | 'prayer' | 'announcement'
   content: string
+  imageUrl?: string
+  parentId?: string
   createdAt: string
   reactions: { emoji: string; count: number; reacted: boolean }[]
   likes: number
   liked: boolean
+  replies?: FeedPost[]
 }
 
 export interface Session {
@@ -179,7 +182,7 @@ interface AppState {
   completeMission: (id: string) => Promise<void>
   toggleLike: (postId: string) => void
   addReaction: (postId: string, emoji: string) => void
-  addPost: (type: FeedPost['type'], content: string) => Promise<void>
+  addPost: (type: FeedPost['type'], content: string, imageUrl?: string | null, parentId?: string | null) => Promise<void>
   submitLiveQuestion: (sessionId: string, content: string) => Promise<void>
   toggleWishlist: (productId: string) => void
   markPurchased: (productId: string) => void
@@ -495,7 +498,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     api.toggleReaction(authUserId, postId, emoji, currentlyReacted).catch(() => {})
   },
 
-  addPost: async (type, content) => {
+  addPost: async (type, content, imageUrl?, parentId?) => {
     const { authUserId, user } = get()
     if (!authUserId) return
     const tempId = `temp-${Date.now()}`
@@ -508,21 +511,51 @@ export const useAppStore = create<AppState>((set, get) => ({
       userXp: user.xp,
       type,
       content,
+      imageUrl: imageUrl ?? undefined,
+      parentId: parentId ?? undefined,
       createdAt: 'agora',
       reactions: [],
       likes: 0,
       liked: false,
+      replies: [],
     }
-    set((s) => ({ feed: [tempPost, ...s.feed] }))
+    if (parentId) {
+      set((s) => ({
+        feed: s.feed.map(p => p.id === parentId
+          ? { ...p, replies: [...(p.replies ?? []), tempPost] }
+          : p
+        )
+      }))
+    } else {
+      set((s) => ({ feed: [tempPost, ...s.feed] }))
+    }
     try {
-      const real = await api.addPost(authUserId, type, content)
-      set((s) => ({ feed: s.feed.map(p => p.id === tempId ? { ...tempPost, id: real.id } : p) }))
+      const real = await api.addPost(authUserId, type, content, imageUrl, parentId)
+      if (parentId) {
+        set((s) => ({
+          feed: s.feed.map(p => p.id === parentId
+            ? { ...p, replies: (p.replies ?? []).map(r => r.id === tempId ? { ...tempPost, id: real.id } : r) }
+            : p
+          )
+        }))
+      } else {
+        set((s) => ({ feed: s.feed.map(p => p.id === tempId ? { ...tempPost, id: real.id } : p) }))
+      }
       if (type === 'comment') {
         get().completeMissionByKey('comment')
       }
       api.checkAchievement('feed_ativo').then(() => get().loadAchievements()).catch(() => {})
     } catch {
-      set((s) => ({ feed: s.feed.filter(p => p.id !== tempId) }))
+      if (parentId) {
+        set((s) => ({
+          feed: s.feed.map(p => p.id === parentId
+            ? { ...p, replies: (p.replies ?? []).filter(r => r.id !== tempId) }
+            : p
+          )
+        }))
+      } else {
+        set((s) => ({ feed: s.feed.filter(p => p.id !== tempId) }))
+      }
     }
   },
 
