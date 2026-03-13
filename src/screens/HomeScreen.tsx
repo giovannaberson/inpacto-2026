@@ -606,7 +606,7 @@ export function HomeScreen() {
         <>
           <div
             style={{
-              position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)',
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)',
               zIndex: 95, backdropFilter: 'blur(3px)',
             }}
             className="fade-in"
@@ -615,7 +615,7 @@ export function HomeScreen() {
           <div
             className="sheet-up"
             style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0,
+              position: 'fixed', bottom: 0, left: 0, right: 0,
               background: 'var(--surface)', borderRadius: '24px 24px 0 0',
               zIndex: 96, padding: '0 20px 40px',
             }}
@@ -653,7 +653,7 @@ export function HomeScreen() {
       {sheet !== 'none' && (
         <div
           style={{
-            position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.28)',
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.28)',
             zIndex: 90, backdropFilter: 'blur(3px)',
           }}
           className="fade-in"
@@ -666,7 +666,7 @@ export function HomeScreen() {
         <div
           className="sheet-up"
           style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
+            position: 'fixed', bottom: 0, left: 0, right: 0,
             background: 'var(--surface)', borderRadius: '24px 24px 0 0',
             zIndex: 91, boxShadow: '0 -4px 30px rgba(0,0,0,0.12)', padding: 0,
           }}
