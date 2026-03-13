@@ -159,6 +159,7 @@ interface AppState {
   rankingLoading: boolean
   openLiveQuestion: boolean
   toast: { message: string; type: 'success' | 'error' } | null
+  celebrationModal: { type: 'mission' | 'achievement' | 'level'; title: string; xp?: number; icon?: string } | null
   // Navigation
   navigateTo: (screen: Screen) => void
   goBack: () => void
@@ -191,6 +192,9 @@ interface AppState {
   setOpenLiveQuestion: (v: boolean) => void
   showToast: (message: string, type?: 'success' | 'error') => void
   hideToast: () => void
+  setUserAvatar: (url: string) => void
+  showCelebration: (data: { type: 'mission' | 'achievement' | 'level'; title: string; xp?: number; icon?: string }) => void
+  hideCelebration: () => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -217,6 +221,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   rankingLoading: false,
   openLiveQuestion: false,
   toast: null,
+  celebrationModal: null,
 
   navigateTo: (screen) => set((s) => ({ currentScreen: screen, previousScreen: s.currentScreen })),
   goBack: () => set((s) => ({ currentScreen: s.previousScreen ?? 'home', previousScreen: null })),
@@ -332,6 +337,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentScreen: 'login',
       openLiveQuestion: false,
       toast: null,
+      celebrationModal: null,
     })
   },
 
@@ -377,20 +383,41 @@ export const useAppStore = create<AppState>((set, get) => ({
   loadAchievements: async () => {
     const userId = get().authUserId
     if (!userId) return
+    const oldAchievements = get().achievements
     const achievements = await api.getAchievements(userId)
     set({ achievements })
+    const newlyUnlocked = achievements.filter(
+      a => a.unlocked && !oldAchievements.find(o => o.id === a.id && o.unlocked)
+    )
+    if (newlyUnlocked.length > 0) {
+      set({ celebrationModal: { type: 'achievement', title: newlyUnlocked[0].title, icon: newlyUnlocked[0].icon } })
+    }
   },
 
   // Actions
   completeMission: async (id) => {
-    const { authUserId, missions } = get()
+    const { authUserId, missions, user } = get()
     const mission = missions.find(m => m.id === id)
     if (!mission || mission.completed || !authUserId) return
+    const LEVEL_THRESHOLDS = [0, 300, 700, 1200, 2000, 3000]
+    const LEVEL_NAMES = ['Novo', 'Participante', 'Engajado', 'Comprometido', 'Saturado', 'Líder']
+    const computeLevel = (xp: number) => {
+      for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+        if (xp >= LEVEL_THRESHOLDS[i]) return i
+      }
+      return 0
+    }
+    const oldLevel = computeLevel(user.xp)
+    const newXp = user.xp + mission.xpReward
+    const newLevel = computeLevel(newXp)
     set((s) => ({
       missions: s.missions.map(m => m.id === id ? { ...m, completed: true } : m),
-      user: { ...s.user, xp: s.user.xp + mission.xpReward },
+      user: { ...s.user, xp: newXp },
       xpAnimation: true,
       xpGained: mission.xpReward,
+      celebrationModal: newLevel > oldLevel
+        ? { type: 'level', title: LEVEL_NAMES[newLevel], icon: '⬆️' }
+        : { type: 'mission', title: mission.title, xp: mission.xpReward },
     }))
     try {
       await api.completeMission(authUserId, id, mission.xpReward)
@@ -403,6 +430,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       set((s) => ({
         missions: s.missions.map(m => m.id === id ? { ...m, completed: false } : m),
         user: { ...s.user, xp: s.user.xp - mission.xpReward },
+        celebrationModal: null,
       }))
     }
   },
@@ -584,4 +612,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setOpenLiveQuestion: (v: boolean) => set({ openLiveQuestion: v }),
   showToast: (message: string, type: 'success' | 'error' = 'success') => set({ toast: { message, type } }),
   hideToast: () => set({ toast: null }),
+  setUserAvatar: (url: string) => set((s) => ({ user: { ...s.user, avatar: url } })),
+  showCelebration: (data: { type: 'mission' | 'achievement' | 'level'; title: string; xp?: number; icon?: string }) => set({ celebrationModal: data }),
+  hideCelebration: () => set({ celebrationModal: null }),
 }))
