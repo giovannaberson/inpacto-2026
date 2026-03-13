@@ -13,8 +13,7 @@ import { AgendaScreen } from './screens/AgendaScreen'
 import { RankingScreen } from './screens/RankingScreen'
 import { StoreScreen } from './screens/StoreScreen'
 import { WishlistScreen } from './screens/WishlistScreen'
-import { NotesScreen } from './screens/NotesScreen'
-import { NoteEditorScreen } from './screens/NoteEditorScreen'
+import { LiveScreen } from './screens/LiveScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { ProfileEditScreen } from './screens/ProfileEditScreen'
 
@@ -76,8 +75,7 @@ function ScreenContent() {
     case 'ranking':      return <RankingScreen />
     case 'store':        return <StoreScreen />
     case 'wishlist':     return <WishlistScreen />
-    case 'notes':        return <NotesScreen />
-    case 'note-editor':  return <NoteEditorScreen />
+    case 'live':        return <LiveScreen />
     case 'profile':      return <ProfileScreen />
     case 'profile-edit': return <ProfileEditScreen />
     default:             return <SplashScreen />
@@ -118,7 +116,7 @@ function CelebrationModal() {
 export default function App() {
   const { currentScreen, initAuth } = useAppStore()
   const isAuth = authScreens.includes(currentScreen)
-  const showTopbar = !isAuth && currentScreen !== 'note-editor' && currentScreen !== 'profile-edit' && currentScreen !== 'wishlist'
+  const showTopbar = !isAuth && currentScreen !== 'live' && currentScreen !== 'profile-edit' && currentScreen !== 'wishlist'
   useEffect(() => { initAuth() }, [])
 
   return (
