@@ -20,7 +20,12 @@ import { ProfileEditScreen } from './screens/ProfileEditScreen'
 
 
 function XpToast() {
-  const { xpAnimation, xpGained } = useAppStore()
+  const { xpAnimation, xpGained, triggerXpAnimation } = useAppStore()
+  useEffect(() => {
+    if (!xpAnimation) return
+    const t = setTimeout(() => triggerXpAnimation(), 3000)
+    return () => clearTimeout(t)
+  }, [xpAnimation])
   if (!xpAnimation) return null
   return (
     <div style={{
