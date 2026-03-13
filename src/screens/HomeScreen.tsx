@@ -355,7 +355,7 @@ export function HomeScreen() {
                     flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >
-                  \u2191
+                  {'\u2191'}
                 </button>
               </div>
             )}
@@ -365,7 +365,7 @@ export function HomeScreen() {
             background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16,
             padding: '14px 18px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12,
           }}>
-            <div style={{ fontSize: 28 }}>\uD83D\uDCE1</div>
+            <div style={{ fontSize: 28 }}>{'\uD83D\uDCE1'}</div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Nenhuma sessao ao vivo</div>
               <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
@@ -433,7 +433,7 @@ export function HomeScreen() {
                         width: 40, height: 40, borderRadius: 12, flexShrink: 0,
                         background: 'rgba(53,18,106,0.08)', display: 'flex',
                         alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                      }}>\uD83D\uDCE2</div>
+                      }>{'📢'}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)', marginBottom: 2 }}>
                           {post.userName}
@@ -569,7 +569,7 @@ export function HomeScreen() {
                   fontSize: 13, color: 'var(--text3)', fontWeight: 600,
                   display: 'flex', alignItems: 'center', gap: 5,
                 }}>
-                  <span>\u26EA</span>
+                  <span>{'\u26EA'}</span>
                   <span>{profileModal.church}</span>
                 </div>
               )}
