@@ -245,7 +245,7 @@ export async function getFeed(userId: string): Promise<FeedPost[]> {
     .from('feed_posts')
     .select(`
       *,
-      profiles!feed_posts_user_id_fkey (name, church),
+      profiles!feed_posts_user_id_fkey (name, church, xp),
       post_likes (user_id),
       post_reactions (emoji, user_id)
     `)
@@ -255,7 +255,7 @@ export async function getFeed(userId: string): Promise<FeedPost[]> {
   if (error || !posts) return []
 
   return posts.map(post => {
-    const profile = post.profiles as { name: string; church: string } | null
+    const profile = post.profiles as { name: string; church: string; xp: number } | null
     const likes = post.post_likes as { user_id: string }[]
     const reactions = post.post_reactions as { emoji: string; user_id: string }[]
 
@@ -289,6 +289,7 @@ export async function getFeed(userId: string): Promise<FeedPost[]> {
       userName: name,
       userInitials: initials,
       church: profile?.church ?? '',
+      userXp: profile?.xp ?? 0,
       type: post.type as FeedPost['type'],
       content: post.content,
       createdAt: timeLabel,
