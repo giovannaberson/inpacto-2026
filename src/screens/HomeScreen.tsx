@@ -22,12 +22,18 @@ export function HomeScreen() {
   const {
     missions, feed, eventConfig, liveSession,
     toggleLike, addReaction, addPost, submitLiveQuestion,
-    addSheetOpen, setAddSheetOpen, completeMissionByKey,
+    addSheetOpen, setAddSheetOpen, completeMissionByKey, openLiveQuestion, setOpenLiveQuestion,
   } = useAppStore()
 
   const [feedTab, setFeedTab] = useState<FeedTab>('comments')
   const [sheet, setSheet] = useState<SheetType>('none')
   const [postContent, setPostContent] = useState('')
+  useEffect(() => {
+    if (openLiveQuestion) {
+      setSheet('live-question')
+      setOpenLiveQuestion(false)
+    }
+  }, [openLiveQuestion])
   const [missionsExpanded, setMissionsExpanded] = useState(false)
   const [questionSent, setQuestionSent] = useState(false)
   const [activeReactions, setActiveReactions] = useState<Record<string, boolean>>({})
