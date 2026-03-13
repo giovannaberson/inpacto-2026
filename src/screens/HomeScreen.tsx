@@ -744,7 +744,7 @@ export function HomeScreen() {
           {/* COMMENT */}
           {sheet === 'comment' && (
             <div style={{ padding: '20px 20px 32px' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>\uD83D\uDCAC Comentario</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>💬 Comentario</div>
               <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>Compartilhe seus pensamentos com todos</div>
               <textarea
                 placeholder="O que voce esta pensando?"
@@ -773,7 +773,7 @@ export function HomeScreen() {
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                Publicar \uD83D\uDCAC
+                Publicar 💬
               </button>
             </div>
           )}
@@ -781,7 +781,7 @@ export function HomeScreen() {
           {/* LIVE QUESTION */}
           {sheet === 'live-question' && (
             <div style={{ padding: '20px 20px 32px' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>\uD83C\uDFA4 Pergunta Ao Vivo</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>🎤 Pergunta Ao Vivo</div>
               <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>
                 {liveSession ? `Para: ${liveSession.title}` : 'Nenhuma sessao ao vivo no momento'}
               </div>
@@ -820,7 +820,7 @@ export function HomeScreen() {
                       fontFamily: 'var(--font-body)',
                     }}
                   >
-                    Enviar pergunta \uD83C\uDFA4
+                    Enviar pergunta 🎤
                   </button>
                 </>
               )}
@@ -830,7 +830,7 @@ export function HomeScreen() {
           {/* PRAYER */}
           {sheet === 'prayer' && (
             <div style={{ padding: '20px 20px 32px' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>\uD83D\uDE4F Pedido de Oracao</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>🙏 Pedido de Oracao</div>
               <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>Compartilhe e receba apoio da comunidade</div>
               <textarea
                 placeholder="Compartilhe seu pedido de oracao..."
@@ -859,7 +859,7 @@ export function HomeScreen() {
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                Enviar pedido \uD83D\uDE4F
+                Enviar pedido 🙏
               </button>
             </div>
           )}
