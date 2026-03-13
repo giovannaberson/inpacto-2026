@@ -7,7 +7,7 @@ export function NoteEditorScreen() {
   const existingNote = notes.find(n => n.sessionId === activeNoteSessionId)
   const [content, setContent] = useState(existingNote?.content ?? '')
   const [saved, setSaved] = useState<null | boolean>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const handleBack = () => {
     saveNote(activeNoteSessionId!, content)
