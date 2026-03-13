@@ -14,9 +14,8 @@ export type Screen =
   | 'agenda'
   | 'ranking'
   | 'store'
-  | 'notes'
+  | 'live'
   | 'profile'
-  | 'note-editor'
   | 'profile-edit'
   | 'wishlist'
 
