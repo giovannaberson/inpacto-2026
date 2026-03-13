@@ -261,11 +261,11 @@ export async function getFeed(userId: string): Promise<FeedPost[]> {
       post_reactions (emoji, user_id)
     `)
     .order('created_at', { ascending: false })
-    .limit(50)
+    .limit(100)
 
   if (error || !posts) return []
 
-  return posts.map(post => {
+  const mapPost = (post: any): FeedPost => {
     const profile = post.profiles as { name: string; church: string; xp: number } | null
     const likes = post.post_likes as { user_id: string }[]
     const reactions = post.post_reactions as { emoji: string; user_id: string }[]
@@ -278,11 +278,11 @@ export async function getFeed(userId: string): Promise<FeedPost[]> {
     }
 
     const name = post.user_id === '00000000-0000-0000-0000-000000000000'
-      ? '📢 Organização'
+      ? '\uD83D\uDCE2 Organização'
       : (profile?.name ?? 'Usuário')
 
-    const initials = name === '📢 Organização'
-      ? '📢'
+    const initials = name === '\uD83D\uDCE2 Organização'
+      ? '\uD83D\uDCE2'
       : name.split(' ').slice(0, 2).map((w: string) => w[0]).join('')
 
     const now = new Date()
@@ -303,18 +303,42 @@ export async function getFeed(userId: string): Promise<FeedPost[]> {
       userXp: profile?.xp ?? 0,
       type: post.type as FeedPost['type'],
       content: post.content,
+      imageUrl: post.image_url ?? undefined,
+      parentId: post.parent_id ?? undefined,
       createdAt: timeLabel,
       reactions: Object.entries(reactionMap).map(([emoji, val]) => ({ emoji, ...val })),
       likes: likes.length,
       liked: likes.some(l => l.user_id === userId),
+      replies: [],
     }
-  })
+  }
+
+  const mapped = posts.map(mapPost)
+  const topLevel = mapped.filter(p => !p.parentId)
+  const replies = mapped.filter(p => p.parentId)
+  for (const reply of replies) {
+    const parent = topLevel.find(p => p.id === reply.parentId)
+    if (parent) parent.replies!.push(reply)
+  }
+  return topLevel
 }
 
-export async function addPost(userId: string, type: FeedPost['type'], content: string) {
+export async function addPost(
+  userId: string,
+  type: FeedPost['type'],
+  content: string,
+  imageUrl?: string | null,
+  parentId?: string | null,
+) {
   const { data, error } = await supabase
     .from('feed_posts')
-    .insert({ user_id: userId, type, content })
+    .insert({
+      user_id: userId,
+      type,
+      content,
+      ...(imageUrl ? { image_url: imageUrl } : {}),
+      ...(parentId ? { parent_id: parentId } : {}),
+    })
     .select()
     .single()
   if (error) throw error
@@ -433,3 +457,12 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
   const { data } = supabase.storage.from('avatars').getPublicUrl(path)
   return data.publicUrl
 }
+export async function uploadPostImage(userId: string, file: File): Promise<string> {
+  const ext = file.name.split('.').pop()
+  const path = `${userId}/${Date.now()}.${ext}`
+  const { error } = await supabase.storage.from('post-images').upload(path, file)
+  if (error) throw error
+  const { data } = supabase.storage.from('post-images').getPublicUrl(path)
+  return data.publicUrl
+}
+
