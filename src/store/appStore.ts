@@ -70,6 +70,7 @@ export interface FeedPost {
   userName: string
   userInitials: string
   church: string
+  userXp: number
   type: 'comment' | 'prayer' | 'announcement'
   content: string
   createdAt: string
@@ -505,6 +506,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       userName: user.name,
       userInitials: user.name.split(' ').slice(0, 2).map(w => w[0]).join(''),
       church: user.church,
+      userXp: user.xp,
       type,
       content,
       createdAt: 'agora',
