@@ -19,7 +19,9 @@ export function ProfileSetupScreen() {
       if (authUserId) await loadInitialData(authUserId)
       // First-time profile setup: fire boas_vindas achievement in background
       checkAchievement('boas_vindas').then(() => loadAchievements()).catch(() => {})
-      completeMissionByKey('complete_profile')
+      if (name.trim() && parseInt(age) && city.trim() && church.trim() && bio.trim()) {
+        completeMissionByKey('complete_profile')
+      }
       navigateTo('home')
     } catch {
       // ignore errors here - profile update is best-effort
