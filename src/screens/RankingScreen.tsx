@@ -8,7 +8,7 @@ const PODIUM_COLORS = [
 const MEDALS = ['🥇', '🥈', '🥉']
 
 export function RankingScreen() {
-  const { ranking, user } = useAppStore()
+  const { ranking, user, rankingLoading } = useAppStore()
   const myRank = ranking.find(r => r.id === user.id)
   const top3 = ranking.slice(0, 3)
 
@@ -29,6 +29,18 @@ export function RankingScreen() {
       </div>
 
       <div className="scroll-area">
+        {rankingLoading && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0', color: 'var(--text2)', fontSize: 15 }}>
+            ⏳ Carregando ranking...
+          </div>
+        )}
+        {!rankingLoading && ranking.length === 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 24px', gap: 12 }}>
+            <div style={{ fontSize: 48 }}>🏆</div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)' }}>Ranking ainda vazio</div>
+            <div style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center' }}>Participe das missões para aparecer aqui!</div>
+          </div>
+        )}
         {/* Podium */}
         <div style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', paddingBottom: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: 10, padding: '24px 20px 0' }}>
