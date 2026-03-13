@@ -154,6 +154,8 @@ interface AppState {
   loading: boolean
   feedLoading: boolean
   rankingLoading: boolean
+  openLiveQuestion: boolean
+  toast: { message: string; type: 'success' | 'error' } | null
   // Navigation
   navigateTo: (screen: Screen) => void
   goBack: () => void
@@ -183,6 +185,9 @@ interface AppState {
   setAddSheetOpen: (open: boolean) => void
   updateProfile: (data: Partial<User>) => Promise<void>
   completeMissionByKey: (key: string) => void
+  setOpenLiveQuestion: (v: boolean) => void
+  showToast: (message: string, type?: 'success' | 'error') => void
+  hideToast: () => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -207,6 +212,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   loading: false,
   feedLoading: false,
   rankingLoading: false,
+  openLiveQuestion: false,
+  toast: null,
 
   navigateTo: (screen) => set((s) => ({ currentScreen: screen, previousScreen: s.currentScreen })),
   goBack: () => set((s) => ({ currentScreen: s.previousScreen ?? 'home', previousScreen: null })),
@@ -319,6 +326,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       notes: [],
       achievements: [],
       currentScreen: 'login',
+      openLiveQuestion: false,
+      toast: null,
     })
   },
 
@@ -559,4 +568,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     const mission = missions.find(m => m.key === key && m.day === currentDay && !m.completed)
     if (mission) get().completeMission(mission.id)
   },
+
+  setOpenLiveQuestion: (v: boolean) => set({ openLiveQuestion: v }),
+  showToast: (message: string, type: 'success' | 'error' = 'success') => set({ toast: { message, type } }),
+  hideToast: () => set({ toast: null }),
 }))
