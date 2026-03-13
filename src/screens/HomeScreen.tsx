@@ -40,7 +40,7 @@ export function HomeScreen() {
   const [profileModal, setProfileModal] = useState<ProfileModal | null>(null)
 
   // Sync addSheetOpen store flag to local sheet state
-  useMemo(() => {
+  useEffect(() => {
     if (addSheetOpen) {
       setSheet('pick')
       setAddSheetOpen(false)
@@ -409,10 +409,15 @@ export function HomeScreen() {
           </div>
 
           {/* Feed card */}
-          <div style={{
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)', padding: '4px 14px', boxShadow: 'var(--shadow-sm)',
-          }}>
+          <div
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius)',
+              padding: '4px 14px',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
             {filteredFeed.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '28px 0', color: 'var(--text3)' }}>
                 <div style={{ fontSize: 28, marginBottom: 8 }}>
@@ -422,110 +427,175 @@ export function HomeScreen() {
                 <div style={{ fontSize: 12, marginTop: 4 }}>Seja o primeiro!</div>
               </div>
             ) : (
-              filteredFeed.map((post, idx) => (
-                <div key={post.id} style={{
-                  padding: '14px 0',
-                  borderBottom: idx < filteredFeed.length - 1 ? '1px solid var(--border2)' : 'none',
-                }}>
-                  {post.type === 'announcement' ? (
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                      <div style={{
-                        width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-                        background: 'rgba(53,18,106,0.08)', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                      }>{'📢'}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)', marginBottom: 2 }}>
-                          {post.userName}
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.55, fontWeight: 500 }}>
-                          {post.content}
-                        </div>
-                        <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4, fontWeight: 500 }}>
-                          {post.createdAt}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Clickable author header */}
-                      <button
-                        onClick={() => setProfileModal({ name: post.userName, initials: post.userInitials, church: post.church, xp: post.userXp })}
-                        style={{
-                          display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start',
-                          background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                          fontFamily: 'var(--font-body)', textAlign: 'left', width: '100%',
-                        }}
-                      >
-                        <div style={{
-                          width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
-                          background: post.type === 'prayer'
-                            ? 'linear-gradient(135deg,#35126A,#FA1462)'
-                            : 'var(--grad-warm)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontWeight: 700, fontSize: 12, color: '#fff',
-                        }}>
-                          {post.userInitials}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>{post.userName}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>
-                            {post.church} · {post.createdAt}
-                          </div>
-                        </div>
-                      </button>
+              filteredFeed.map((post, idx) => {
+                const isAnnouncement = post.type === 'announcement'
+                const isPrayer = post.type === 'prayer'
 
-                      {/* Content */}
-                      {post.type === 'prayer' ? (
-                        <div style={{
-                          background: 'linear-gradient(135deg,rgba(53,18,106,0.06),rgba(77,193,231,0.04))',
-                          borderLeft: '3px solid rgba(53,18,106,0.3)', borderRadius: '0 8px 8px 0',
-                          padding: '10px 12px', marginBottom: 10, fontSize: 14,
-                          color: 'var(--text2)', lineHeight: 1.6, fontStyle: 'italic',
-                        }}>
-                          {post.content}
-                        </div>
-                      ) : (
-                        <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 10 }}>
-                          {post.content}
-                        </p>
-                      )}
-
-                      {/* Actions */}
-                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <button
-                          onClick={() => toggleLike(post.id)}
+                return (
+                  <div
+                    key={post.id}
+                    style={{
+                      padding: '14px 0',
+                      borderBottom: idx < filteredFeed.length - 1 ? '1px solid var(--border2)' : 'none',
+                    }}
+                  >
+                    {isAnnouncement ? (
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <div
                           style={{
-                            display: 'flex', alignItems: 'center', gap: 4, fontSize: 12,
-                            color: post.liked ? 'var(--pink)' : 'var(--text3)',
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            fontWeight: 600, padding: '3px 0', fontFamily: 'var(--font-body)',
+                            width: 40,
+                            height: 40,
+                            borderRadius: 12,
+                            flexShrink: 0,
+                            background: 'rgba(53,18,106,0.08)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 18,
                           }}
                         >
-                          {post.liked ? '\u2764\ufe0f' : '\uD83E\uDD0D'}
-                          <span>{post.likes}</span>
-                        </button>
-                        {post.reactions.map(r => (
-                          <button
-                            key={r.emoji}
-                            onClick={() => addReaction(post.id, r.emoji)}
+                          <span>{'\uD83D\uDCE2'}</span>
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)', marginBottom: 2 }}>
+                            {post.userName}
+                          </div>
+                          <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.55, fontWeight: 500 }}>
+                            {post.content}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4, fontWeight: 500 }}>
+                            {post.createdAt}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() =>
+                            setProfileModal({
+                              name: post.userName,
+                              initials: post.userInitials,
+                              church: post.church,
+                              xp: post.userXp,
+                            })
+                          }
+                          style={{
+                            display: 'flex',
+                            gap: 10,
+                            marginBottom: 8,
+                            alignItems: 'flex-start',
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer',
+                            fontFamily: 'var(--font-body)',
+                            textAlign: 'left',
+                            width: '100%',
+                          }}
+                        >
+                          <div
                             style={{
-                              display: 'flex', alignItems: 'center', gap: 4, fontSize: 12,
-                              color: r.reacted ? 'var(--text)' : 'var(--text3)',
-                              background: r.reacted ? 'var(--bg2)' : 'none',
-                              border: 'none', cursor: 'pointer', fontWeight: 600,
-                              padding: '2px 6px', borderRadius: 20,
-                              fontFamily: 'var(--font-body)', transition: 'all 0.15s',
+                              width: 38,
+                              height: 38,
+                              borderRadius: '50%',
+                              flexShrink: 0,
+                              background: isPrayer
+                                ? 'linear-gradient(135deg,#35126A,#FA1462)'
+                                : 'var(--grad-warm)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 700,
+                              fontSize: 12,
+                              color: '#fff',
                             }}
                           >
-                            {r.emoji} {r.count}
+                            {post.userInitials}
+                          </div>
+
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>
+                              {post.userName}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>
+                              {post.church} · {post.createdAt}
+                            </div>
+                          </div>
+                        </button>
+
+                        {isPrayer ? (
+                          <div
+                            style={{
+                              background: 'linear-gradient(135deg,rgba(53,18,106,0.06),rgba(77,193,231,0.04))',
+                              borderLeft: '3px solid rgba(53,18,106,0.3)',
+                              borderRadius: '0 8px 8px 0',
+                              padding: '10px 12px',
+                              marginBottom: 10,
+                              fontSize: 14,
+                              color: 'var(--text2)',
+                              lineHeight: 1.6,
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            {post.content}
+                          </div>
+                        ) : (
+                          <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 10 }}>
+                            {post.content}
+                          </p>
+                        )}
+
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                          <button
+                            onClick={() => toggleLike(post.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              fontSize: 12,
+                              color: post.liked ? 'var(--pink)' : 'var(--text3)',
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                              padding: '3px 0',
+                              fontFamily: 'var(--font-body)',
+                            }}
+                          >
+                            {post.liked ? '\u2764\ufe0f' : '\uD83E\uDD0D'}
+                            <span>{post.likes}</span>
                           </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))
+
+                          {post.reactions.map((r) => (
+                            <button
+                              key={r.emoji}
+                              onClick={() => addReaction(post.id, r.emoji)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                fontSize: 12,
+                                color: r.reacted ? 'var(--text)' : 'var(--text3)',
+                                background: r.reacted ? 'var(--bg2)' : 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                padding: '2px 6px',
+                                borderRadius: 20,
+                                fontFamily: 'var(--font-body)',
+                                transition: 'all 0.15s',
+                              }}
+                            >
+                              {r.emoji} {r.count}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )
+              })
             )}
           </div>
         </div>
