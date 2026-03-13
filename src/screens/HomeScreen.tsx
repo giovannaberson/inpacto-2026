@@ -16,7 +16,7 @@ const LIVE_REACTIONS = [
   { emoji: '\uD83D\uDE4C', label: 'Louvor' },
 ]
 
-type ProfileModal = { name: string; initials: string; church: string }
+type ProfileModal = { name: string; initials: string; church: string; xp: number }
 
 export function HomeScreen() {
   const {
@@ -450,7 +450,7 @@ export function HomeScreen() {
                     <>
                       {/* Clickable author header */}
                       <button
-                        onClick={() => setProfileModal({ name: post.userName, initials: post.userInitials, church: post.church })}
+                        onClick={() => setProfileModal({ name: post.userName, initials: post.userInitials, church: post.church, xp: post.userXp })}
                         style={{
                           display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start',
                           background: 'none', border: 'none', padding: 0, cursor: 'pointer',
@@ -564,15 +564,16 @@ export function HomeScreen() {
                 {profileModal.initials}
               </div>
               <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>{profileModal.name}</div>
-              {profileModal.church && (
-                <div style={{
-                  fontSize: 13, color: 'var(--text3)', fontWeight: 600,
-                  display: 'flex', alignItems: 'center', gap: 5,
-                }}>
-                  <span>{'\u26EA'}</span>
-                  <span>{profileModal.church}</span>
-                </div>
-              )}
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pink)', background: 'rgba(250,20,98,0.08)',
+                padding: '4px 12px', borderRadius: 20, border: '1px solid rgba(250,20,98,0.15)' }}>
+                {['Novo','Participante','Engajado','Comprometido','Saturado','Líder'][
+                  [0,300,700,1200,2000,3000].reduce((lvl,t,i) => profileModal.xp >= t ? i : lvl, 0)
+                ]} · {profileModal.xp} XP
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span>{'⛪'}</span>
+                <span>{profileModal.church || 'Igreja não informada'}</span>
+              </div>
             </div>
           </div>
         </>
