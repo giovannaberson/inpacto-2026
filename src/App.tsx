@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useAppStore } from './store/appStore'
 import { Navbar } from './components/Navbar'
 import { Topbar } from './components/Topbar'
@@ -78,10 +79,72 @@ function ScreenContent() {
   }
 }
 
+function CelebrationModal() {
+  const { celebrationModal, hideCelebration } = useAppStore()
+  useEffect(() => {
+    if (!celebrationModal) return
+    const t = setTimeout(hideCelebration, 2800)
+    return () => clearTimeout(t)
+  }, [celebrationModal, hideCelebration])
+  if (!celebrationModal) return null
+  const configs: Record<string, { icon: string; label: string }> = {
+    mission: { icon: '🎯', label: 'Missão Concluída!' },
+    achievement: { icon: celebrationModal.icon || '🎖️', label: 'Conquista Desbloqueada!' },
+    level: { icon: celebrationModal.icon || '⬆️', label: 'Nível Novo!' },
+  }
+  const config = configs[celebrationModal.type]
+  return (
+    <div onClick={hideCelebration} style={{ position: 'fixed', inset: 0, zIndex: 9998,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', cursor: 'pointer' }}>
+      <div style={{ textAlign: 'center', padding: '36px 32px', background: 'var(--surface)',
+        borderRadius: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.4)', maxWidth: 280 }}>
+        <div style={{ fontSize: 64, marginBottom: 12 }}>{config.icon}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 6 }}>{config.label}</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: celebrationModal.xp ? 8 : 0 }}>{celebrationModal.title}</div>
+        {celebrationModal.xp && (
+          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--xp)' }}>+{celebrationModal.xp} XP ⚡</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CelebrationModal() {
+  const { celebrationModal, hideCelebration } = useAppStore()
+  useEffect(() => {
+    if (!celebrationModal) return
+    const t = setTimeout(hideCelebration, 2800)
+    return () => clearTimeout(t)
+  }, [celebrationModal, hideCelebration])
+  if (!celebrationModal) return null
+  const configs: Record<string, { icon: string; label: string }> = {
+    mission: { icon: '🎯', label: 'Missão Concluída!' },
+    achievement: { icon: celebrationModal.icon || '🎖️', label: 'Conquista Desbloqueada!' },
+    level: { icon: celebrationModal.icon || '⬆️', label: 'Nível Novo!' },
+  }
+  const config = configs[celebrationModal.type]
+  return (
+    <div onClick={hideCelebration} style={{ position: 'fixed', inset: 0, zIndex: 9998,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', cursor: 'pointer' }}>
+      <div style={{ textAlign: 'center', padding: '36px 32px', background: 'var(--surface)',
+        borderRadius: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.4)', maxWidth: 280 }}>
+        <div style={{ fontSize: 64, marginBottom: 12 }}>{config.icon}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 6 }}>{config.label}</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: celebrationModal.xp ? 8 : 0 }}>{celebrationModal.title}</div>
+        {celebrationModal.xp && (
+          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--xp)' }}>+{celebrationModal.xp} XP ⚡</div>
+        )}
+      </div>
+    </div>
+  )
+}
 export default function App() {
-  const { currentScreen } = useAppStore()
+  const { currentScreen, initAuth } = useAppStore()
   const isAuth = authScreens.includes(currentScreen)
   const showTopbar = !isAuth && currentScreen !== 'note-editor' && currentScreen !== 'profile-edit' && currentScreen !== 'wishlist'
+  useEffect(() => { initAuth() }, [])
 
   return (
     <div style={{
@@ -105,6 +168,7 @@ export default function App() {
 
       <XpToast />
       <GlobalToast />
+      <CelebrationModal />
       <Navbar />
     </div>
   )
